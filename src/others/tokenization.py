@@ -26,24 +26,24 @@ from pytorch_transformers import cached_path
 
 logger = logging.getLogger(__name__)
 
-#PRETRAINED_VOCAB_ARCHIVE_MAP = {
-#    'bert-base-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt",
-#    'bert-large-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-uncased-vocab.txt",
-#    'bert-base-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-cased-vocab.txt",
-#    'bert-large-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-cased-vocab.txt",
-#    'bert-base-multilingual-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-uncased-vocab.txt",
-#    'bert-base-multilingual-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-cased-vocab.txt",
-#    'bert-base-chinese': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt",
-#}
-#PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
-#    'bert-base-uncased': 512,
-#    'bert-large-uncased': 512,
-#    'bert-base-cased': 512,
-#    'bert-large-cased': 512,
-#    'bert-base-multilingual-uncased': 512,
-#    'bert-base-multilingual-cased': 512,
-#    'bert-base-chinese': 512,
-#}
+PRETRAINED_VOCAB_ARCHIVE_MAP = {
+   'bert-base-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt",
+   'bert-large-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-uncased-vocab.txt",
+   'bert-base-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-cased-vocab.txt",
+   'bert-large-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-cased-vocab.txt",
+   'bert-base-multilingual-uncased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-uncased-vocab.txt",
+   'bert-base-multilingual-cased': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-multilingual-cased-vocab.txt",
+   'bert-base-chinese': "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt",
+}
+PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP = {
+   'bert-base-uncased': 512,
+   'bert-large-uncased': 512,
+   'bert-base-cased': 512,
+   'bert-large-cased': 512,
+   'bert-base-multilingual-uncased': 512,
+   'bert-base-multilingual-cased': 512,
+   'bert-base-chinese': 512,
+}
 VOCAB_NAME = 'vocab.txt'
 
 
@@ -75,7 +75,7 @@ class BertTokenizer(object):
     """Runs end-to-end tokenization: punctuation splitting + wordpiece"""
 
     def __init__(self, vocab_file, do_lower_case=True, max_len=None,
-                 never_split=("[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]", "[unused0]", "[unused1]", "[unused2]", "[unused3]", "[unused4]", "[unused5]", "[unused6]")):
+                 never_split=("[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]", "[unused1]", "[unused2]", "[unused3]", "[unused4]", "[unused5]", "[unused6]", "[unused7]")):
 
         if not os.path.isfile(vocab_file):
             raise ValueError(

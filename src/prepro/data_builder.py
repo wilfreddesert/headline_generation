@@ -21,6 +21,9 @@ from others.utils import clean
 from prepro.utils import _get_word_ngrams
 
 import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
+
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 nyt_remove_words = ["photo", "graph", "chart", "map", "table", "drawing"]
 
@@ -98,9 +101,9 @@ def load_xml(p):
             break
     if (len(paras) > 0):
         if (len(byline) > 0):
-            paras = [title + ['[unused3]'] + byline + ['[unused4]']] + paras
+            paras = [title + ['[unused4]'] + byline + ['[unused5]']] + paras
         else:
-            paras = [title + ['[unused3]']] + paras
+            paras = [title + ['[unused4]']] + paras
 
         return paras, abs
     else:
@@ -120,7 +123,7 @@ def tokenize(args):
             if (not s.endswith('story')):
                 continue
             f.write("%s\n" % (os.path.join(stories_dir, s)))
-    command = ['java', 'edu.stanford.nlp.pipeline.StanfordCoreNLP', '-annotators', 'tokenize,ssplit',
+    command = ['java', '-jar', '/Users/leshanbog/Downloads/stanford-corenlp-full-2018-10-05/stanford-corenlp-3.9.2.jar', '-annotators', 'tokenize,ssplit',
                '-ssplit.newlineIsSentenceBreak', 'always', '-filelist', 'mapping_for_corenlp.txt', '-outputFormat',
                'json', '-outputDirectory', tokenized_stories_dir]
     print("Tokenizing %i files in %s and saving in %s..." % (len(stories), stories_dir, tokenized_stories_dir))
@@ -212,9 +215,9 @@ class BertData():
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
         self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused0]'
-        self.tgt_eos = '[unused1]'
-        self.tgt_sent_split = '[unused2]'
+        self.tgt_bos = '[unused1]'
+        self.tgt_eos = '[unused2]'
+        self.tgt_sent_split = '[unused3]'
         self.sep_vid = self.tokenizer.vocab[self.sep_token]
         self.cls_vid = self.tokenizer.vocab[self.cls_token]
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
@@ -258,8 +261,8 @@ class BertData():
         cls_ids = [i for i, t in enumerate(src_subtoken_idxs) if t == self.cls_vid]
         sent_labels = sent_labels[:len(cls_ids)]
 
-        tgt_subtokens_str = '[unused0] ' + ' [unused2] '.join(
-            [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused1]'
+        tgt_subtokens_str = '[unused1] ' + ' [unused3] '.join(
+            [' '.join(self.tokenizer.tokenize(' '.join(tt), use_bert_basic_tokenizer=use_bert_basic_tokenizer)) for tt in tgt]) + ' [unused2]'
         tgt_subtoken = tgt_subtokens_str.split()[:self.args.max_tgt_ntokens]
         if ((not is_test) and len(tgt_subtoken) < self.args.min_tgt_ntokens):
             return None
@@ -273,13 +276,9 @@ class BertData():
 
 
 def format_to_bert(args):
-    if (args.dataset != ''):
-        datasets = [args.dataset]
-    else:
-        datasets = ['train', 'valid', 'test']
-    for corpus_type in datasets:
+    for corpus_type in ['train', 'test']:
         a_lst = []
-        for json_f in glob.glob(pjoin(args.raw_path, '*' + corpus_type + '.*.json')):
+        for json_f in glob.glob(pjoin(args.raw_path, '*' + corpus_type + '*.json')):
             real_name = json_f.split('/')[-1]
             a_lst.append((corpus_type, json_f, args, pjoin(args.save_path, real_name.replace('json', 'bert.pt'))))
         print(a_lst)
@@ -326,6 +325,31 @@ def _format_to_bert(params):
     torch.save(datasets, save_file)
     datasets = []
     gc.collect()
+
+
+def ria_to_lines(args):
+    for corpus_path in ['ria.shuffled.train.json', 'ria.shuffled.test.json']:
+        dataset = []
+        with open(args.raw_path + corpus_path, "r", encoding="utf-8") as r:
+            for line in r:
+                data = json.loads(line.strip())
+                title = data["title"]
+                text = data["text"]
+                clean_text = BeautifulSoup(text, 'html.parser').text.replace('\xa0', ' ').replace('\n', ' ')
+                data = {'src': list(map(word_tokenize, sent_tokenize(clean_text))),
+                        'tgt': list(map(word_tokenize, sent_tokenize(title)))}
+                if not clean_text or not title:
+                    continue
+                dataset.append(data)
+                if len(dataset) % 10000 == 0:
+                    print(f'Done {len(dataset)}...')
+                    if len(dataset) > 100000:
+                        break
+
+        pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_path, 0)
+        with open(pt_file, 'w', encoding='utf-8') as save:
+            save.write(json.dumps(dataset, ensure_ascii=False))
+
 
 
 def format_to_lines(args):
@@ -379,7 +403,6 @@ def _format_to_lines(params):
     print(f)
     source, tgt = load_json(f, args.lower)
     return {'src': source, 'tgt': tgt}
-
 
 
 

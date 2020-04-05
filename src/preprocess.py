@@ -30,6 +30,11 @@ def do_tokenize(args):
     data_builder.tokenize(args)
     print(time.clock())
 
+def do_ria_to_lines(args):
+    print(time.clock())
+    data_builder.ria_to_lines(args)
+    print(time.clock())
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -61,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument("-lower", type=str2bool, nargs='?',const=True,default=True)
     parser.add_argument("-use_bert_basic_tokenizer", type=str2bool, nargs='?',const=True,default=False)
 
-    parser.add_argument('-log_file', default='../../logs/cnndm.log')
+    parser.add_argument('-log_file', default='../logs/cnndm.log')
 
     parser.add_argument('-dataset', default='')
 
@@ -70,4 +75,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     init_logger(args.log_file)
+    #do_ria_to_lines(args)
     eval('data_builder.'+args.mode + '(args)')
