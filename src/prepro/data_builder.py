@@ -133,6 +133,7 @@ def tokenize(args):
 
     # Check that the tokenized stories directory contains the same number of files as the original directory
     num_orig = len(os.listdir(stories_dir))
+    num_orig = len(os.listdir(stories_dir))
     num_tokenized = len(os.listdir(tokenized_stories_dir))
     if num_orig != num_tokenized:
         raise Exception(
@@ -346,7 +347,7 @@ def ria_to_lines(args):
                     if len(dataset) > 100000:
                         break
 
-        pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_path, 0)
+        pt_file = "{:s}/{:s}.json".format(args.save_path, corpus_path)
         with open(pt_file, 'w', encoding='utf-8') as save:
             save.write(json.dumps(dataset, ensure_ascii=False))
 
