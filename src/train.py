@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument("-label_smoothing", default=0.1, type=float)
     parser.add_argument("-generator_shard_size", default=32, type=int)
     parser.add_argument("-alpha",  default=0.6, type=float)
-    parser.add_argument("-beam_size", default=5, type=int)
+    parser.add_argument("-beam_size", default=2, type=int)
     parser.add_argument("-min_length", default=15, type=int)
     parser.add_argument("-max_length", default=150, type=int)
     parser.add_argument("-max_tgt_len", default=140, type=int)

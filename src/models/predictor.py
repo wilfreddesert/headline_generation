@@ -125,6 +125,7 @@ class Translator(object):
                   attn_debug=False):
 
         self.model.eval()
+        self.logger.info('Translatin...')
         gold_path = self.args.result_path + '.%d.gold' % step
         can_path = self.args.result_path + '.%d.candidate' % step
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
@@ -137,6 +138,7 @@ class Translator(object):
 
         raw_src_path = self.args.result_path + '.%d.raw_src' % step
         self.src_out_file = codecs.open(raw_src_path, 'w', 'utf-8')
+        self.logger.info(f'Predictions file: {can_path}')
 
         # pred_results, gold_results = [], []
         ct = 0
@@ -148,10 +150,11 @@ class Translator(object):
                     self.max_length = gold_tgt_len + 60
                 batch_data = self.translate_batch(batch)
                 translations = self.from_batch(batch_data)
+                self.logger.info('Batch translation done...')
 
                 for trans in translations:
                     pred, gold, src = trans
-                    pred_str = pred.replace('[unused0]', '').replace('[unused3]', '').replace('[PAD]', '').replace('[unused1]', '').replace(r' +', ' ').replace(' [unused2] ', '<q>').replace('[unused2]', '').strip()
+                    pred_str = pred.replace('[unused1]', '').replace('[unused4]', '').replace('[PAD]', '').replace('[unused2]', '').replace(r' +', ' ').replace(' [unused3] ', '<q>').replace('[unused3]', '').strip()
                     gold_str = gold.strip()
                     if(self.args.recall_eval):
                         _pred_str = ''
@@ -184,13 +187,6 @@ class Translator(object):
         self.gold_out_file.close()
         self.src_out_file.close()
 
-        if (step != -1):
-            rouges = self._report_rouge(gold_path, can_path)
-            self.logger.info('Rouges at step %d \n%s' % (step, rouge_results_to_str(rouges)))
-            if self.tensorboard_writer is not None:
-                self.tensorboard_writer.add_scalar('test/rouge1-F', rouges['rouge_1_f_score'], step)
-                self.tensorboard_writer.add_scalar('test/rouge2-F', rouges['rouge_2_f_score'], step)
-                self.tensorboard_writer.add_scalar('test/rougeL-F', rouges['rouge_l_f_score'], step)
 
     def _report_rouge(self, gold_path, can_path):
         self.logger.info("Calculating Rouge")
@@ -269,6 +265,7 @@ class Translator(object):
         results["batch"] = batch
 
         for step in range(max_length):
+            self.logger.info(f'Step {step} of translating batch...')
             decoder_input = alive_seq[:, -1].view(1, -1)
 
             # Decoder forward.

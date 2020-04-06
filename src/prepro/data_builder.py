@@ -25,6 +25,7 @@ from bs4 import BeautifulSoup
 
 from nltk.tokenize import sent_tokenize, word_tokenize
 
+
 nyt_remove_words = ["photo", "graph", "chart", "map", "table", "drawing"]
 
 
@@ -347,9 +348,12 @@ def ria_to_lines(args):
                     if len(dataset) > 100000:
                         break
 
-        pt_file = "{:s}/{:s}.json".format(args.save_path, corpus_path)
+        pt_file = "{:s}/{:s}".format(args.save_path, corpus_path)
+        print(f'Writing result to {pt_file}')
         with open(pt_file, 'w', encoding='utf-8') as save:
             save.write(json.dumps(dataset, ensure_ascii=False))
+
+        print('Done.')
 
 
 
