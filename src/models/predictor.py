@@ -186,6 +186,7 @@ class Translator(object):
         self.can_out_file.close()
         self.gold_out_file.close()
         self.src_out_file.close()
+        self.logger.info('DONE')
 
 
     def _report_rouge(self, gold_path, can_path):
@@ -265,7 +266,6 @@ class Translator(object):
         results["batch"] = batch
 
         for step in range(max_length):
-            self.logger.info(f'Step {step} of translating batch...')
             decoder_input = alive_seq[:, -1].view(1, -1)
 
             # Decoder forward.

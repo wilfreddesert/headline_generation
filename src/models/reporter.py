@@ -165,7 +165,7 @@ class Statistics(object):
     * elapsed time
     """
 
-    def __init__(self, loss=0, n_words=0, n_correct=0):
+    def __init__(self, loss=0, n_words=1, n_correct=0):
         self.loss = loss
         self.n_words = n_words
         self.n_docs = 0
@@ -244,7 +244,10 @@ class Statistics(object):
 
     def ppl(self):
         """ compute perplexity """
-        return math.exp(min(self.loss / self.n_words, 100))
+        if self.n_words > 0:
+            return math.exp(min(self.loss / self.n_words, 100))
+        else:
+            return -1
 
     def elapsed_time(self):
         """ compute elapsed time """

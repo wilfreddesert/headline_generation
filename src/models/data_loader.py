@@ -75,6 +75,7 @@ def load_dataset(args, corpus_type, shuffle):
     assert corpus_type in ["train", "valid", "test"]
 
     def _lazy_dataset_loader(pt_file, corpus_type):
+        logger.info(f'DATASET = {pt_file}')
         dataset = torch.load(pt_file)
         logger.info('Loading %s dataset from %s, number of examples: %d' %
                     (corpus_type, pt_file, len(dataset)))
@@ -91,6 +92,7 @@ def load_dataset(args, corpus_type, shuffle):
     #else:
         # Only one inputters.*Dataset, simple!
         #pt = args.bert_data_path + '.' + corpus_type + '.pt'
+    logger.info(f'Will load {args.bert_data_path + corpus_type}.bert.pt')
     yield _lazy_dataset_loader(args.bert_data_path + corpus_type + '.bert.pt', corpus_type)
 
 
@@ -184,10 +186,6 @@ class DataIterator(object):
             random.shuffle(self.dataset)
         xs = self.dataset
         return xs
-
-
-
-
 
 
     def preprocess(self, ex, is_test):
