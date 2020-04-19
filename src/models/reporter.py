@@ -3,7 +3,9 @@ from __future__ import print_function
 from datetime import datetime
 
 import time
+import os
 import math
+import glob
 import sys
 
 from distributed import all_gather_list
@@ -22,7 +24,6 @@ def build_report_manager(opt):
     report_mgr = ReportMgr(opt.report_every, start_time=-1,
                            tensorboard_writer=writer)
     return report_mgr
-
 
 class ReportMgrBase(object):
     """
@@ -148,7 +149,7 @@ class ReportMgr(ReportMgrBase):
         if valid_stats is not None:
             self.log('Validation perplexity: %g' % valid_stats.ppl())
             self.log('Validation accuracy: %g' % valid_stats.accuracy())
-
+            self.log('Validation xent: ' +  str(valid_stats.xent()))
             self.maybe_log_tensorboard(valid_stats,
                                        "valid",
                                        lr,
@@ -274,6 +275,7 @@ class Statistics(object):
                self.n_words / (t + 1e-5),
                time.time() - start))
         sys.stdout.flush()
+
 
     def log_tensorboard(self, prefix, writer, learning_rate, step):
         """ display statistics to tensorboard """
