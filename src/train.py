@@ -13,7 +13,6 @@ from train_extractive import train_ext, validate_ext, test_ext
 model_flags = ['hidden_size', 'ff_size', 'heads', 'emb_size', 'enc_layers', 'enc_hidden_size', 'enc_ff_size',
                'dec_layers', 'dec_hidden_size', 'dec_ff_size', 'encoder', 'ff_actv', 'use_interval']
 
-
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -21,8 +20,6 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
 
 
 if __name__ == '__main__':
@@ -51,9 +48,9 @@ if __name__ == '__main__':
     parser.add_argument("-share_emb", type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument("-finetune_bert", type=str2bool, nargs='?', const=True, default=True)
     parser.add_argument("-dec_dropout", default=0.2, type=float)
-    parser.add_argument("-dec_layers", default=6, type=int)
+    parser.add_argument("-dec_layers", default=4, type=int)
     parser.add_argument("-dec_hidden_size", default=768, type=int)
-    parser.add_argument("-dec_heads", default=8, type=int)
+    parser.add_argument("-dec_heads", default=6, type=int)
     parser.add_argument("-dec_ff_size", default=2048, type=int)
     parser.add_argument("-enc_hidden_size", default=512, type=int)
     parser.add_argument("-enc_ff_size", default=512, type=int)

@@ -25,6 +25,7 @@ from bs4 import BeautifulSoup
 
 from nltk.tokenize import sent_tokenize, word_tokenize
 
+
 nyt_remove_words = ["photo", "graph", "chart", "map", "table", "drawing"]
 
 
@@ -329,7 +330,7 @@ def _format_to_bert(params):
 
 
 def ria_to_lines(args):
-    for corpus_path in ['ria.shuffled.train.json', 'ria.shuffled.test.json']:
+    for corpus_path in ['ria.shuffled.test.json']:
         dataset = []
         with open(args.raw_path + corpus_path, "r", encoding="utf-8") as r:
             for line in r:
@@ -344,12 +345,13 @@ def ria_to_lines(args):
                 dataset.append(data)
                 if len(dataset) % 10000 == 0:
                     print(f'Done {len(dataset)}...')
-                    if len(dataset) > 100000:
-                        break
 
-        pt_file = "{:s}/{:s}.json".format(args.save_path, corpus_path)
+        pt_file = "{:s}/{:s}".format(args.save_path, corpus_path)
+        print(f'Writing result to {pt_file}')
         with open(pt_file, 'w', encoding='utf-8') as save:
             save.write(json.dumps(dataset, ensure_ascii=False))
+
+        print('Done.')
 
 
 

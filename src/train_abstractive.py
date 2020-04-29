@@ -142,16 +142,20 @@ def validate_abs(args, device_id):
         while (True):
             cp_files = sorted(glob.glob(os.path.join(args.model_path, 'model_step_*.pt')))
             cp_files.sort(key=os.path.getmtime)
+            logger.info('in validation...')
             if (cp_files):
                 cp = cp_files[-1]
                 time_of_cp = os.path.getmtime(cp)
                 if (not os.path.getsize(cp) > 0):
+                    logger.info('Going to sleep')
                     time.sleep(60)
                     continue
                 if (time_of_cp > timestep):
                     timestep = time_of_cp
                     step = int(cp.split('.')[-2].split('_')[-1])
+                    logger.info('Going to validate')
                     validate(args, device_id, cp, step)
+                    logger.info('Going to test')
                     test_abs(args, device_id, cp, step)
 
             cp_files = sorted(glob.glob(os.path.join(args.model_path, 'model_step_*.pt')))
@@ -162,6 +166,7 @@ def validate_abs(args, device_id):
                 if (time_of_cp > timestep):
                     continue
             else:
+                logger.info('Nothing to validate. Going to sleep')
                 time.sleep(300)
 
 
@@ -181,15 +186,16 @@ def validate(args, device_id, pt, step):
 
     model = AbsSummarizer(args, device, checkpoint)
     model.eval()
+    logger.info('Model in set eval state')
 
-    valid_iter = data_loader.Dataloader(args, load_dataset(args, 'valid', shuffle=False),
+    valid_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
                                         args.batch_size, device,
-                                        shuffle=False, is_test=False)
+                                        shuffle=False, is_test=True)
 
     tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/', 
             do_lower_case=True)
-    symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
-               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
+    symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
+               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
 
     valid_loss = abs_loss(model.generator, symbols, model.vocab_size, train=False, device=device)
 
@@ -213,6 +219,7 @@ def test_abs(args, device_id, pt, step):
             setattr(args, k, opt[k])
     print(args)
 
+    logger.info('Going to load model')
     model = AbsSummarizer(args, device, checkpoint)
     model.eval()
 
@@ -221,9 +228,10 @@ def test_abs(args, device_id, pt, step):
                                        shuffle=False, is_test=True)
     tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/',
             do_lower_case=True)
-    symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
-               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
+    symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
+               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
+    logger.info('Predictot is built. Going to translate')
     predictor.translate(test_iter, step)
 
 
@@ -248,9 +256,10 @@ def test_text_abs(args, device_id, pt, step):
     test_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
                                        args.test_batch_size, device,
                                        shuffle=False, is_test=True)
+    logger.info(dir(test_iter))
     tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/', do_lower_case=True)
-    symbols = {'BOS': tokenizer.vocab['[unused0]'], 'EOS': tokenizer.vocab['[unused1]'],
-               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused2]']}
+    symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
+               'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
     predictor.translate(test_iter, step)
 
