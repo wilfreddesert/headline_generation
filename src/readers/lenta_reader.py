@@ -1,30 +1,15 @@
-import json
+import csv
 from typing import Dict
 
-from bs4 import BeautifulSoup
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.tokenizers.tokenizer import Tokenizer
 from allennlp.data.token_indexers.token_indexer import TokenIndexer
-from allennlp.data.tokenizers import WordTokenizer
-from allennlp.data.tokenizers.word_splitter import SimpleWordSplitter
 
 from readers.summarization_reader import SummarizationReader
 
 
-def parse_ria_json(path):
-    with open(path, "r", encoding="utf-8") as r:
-        for line in r:
-            data = json.loads(line.strip())
-            title = data["title"]
-            text = data["text"]
-            clean_text = BeautifulSoup(text, 'html.parser').text.replace('\xa0', ' ').replace('\n', ' ')
-            if not clean_text or not title:
-                continue
-            yield clean_text, title
-
-
-@DatasetReader.register("ria")
-class RIAReader(SummarizationReader):
+@DatasetReader.register("lenta")
+class LentaReader(SummarizationReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
                  source_token_indexers: Dict[str, TokenIndexer] = None,
@@ -35,8 +20,6 @@ class RIAReader(SummarizationReader):
                  target_namespace: str = "target_tokens",
                  save_copy_fields: bool = False,
                  save_pgn_fields: bool = False) -> None:
-        if not tokenizer:
-            tokenizer = WordTokenizer(word_splitter=SimpleWordSplitter())
         super().__init__(
             tokenizer=tokenizer,
             source_token_indexers=source_token_indexers,
@@ -46,8 +29,21 @@ class RIAReader(SummarizationReader):
             separate_namespaces=separate_namespaces,
             target_namespace=target_namespace,
             save_copy_fields=save_copy_fields,
-            save_pgn_fields=save_pgn_fields
+            save_pgn_fields=save_pgn_fields,
         )
 
     def parse_set(self, path):
-        return parse_ria_json(path)
+        with open(path, "r", encoding="utf-8") as r:
+            reader = csv.reader(r, delimiter=",", quotechar='"')
+            header = next(reader)
+            assert header[1] == "title"
+            assert header[2] == "text"
+            for row in reader:
+                if len(row) < 3:
+                    continue
+                title, text = row[1], row[2]
+                if not title or not text:
+                    continue
+                text = text.replace("\xa0", " ").lower()
+                title = title.replace("\xa0", " ").lower()
+                yield text, title

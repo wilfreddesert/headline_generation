@@ -191,13 +191,15 @@ class DataIterator(object):
     def preprocess(self, ex, is_test):
         src = ex['src']
         tgt = ex['tgt'][:self.args.max_tgt_len][:-1]+[2]
-        src_sent_labels = ex['src_sent_labels']
+        #src_sent_labels = ex['src_sent_labels']
         segs = ex['segs']
         if(not self.args.use_interval):
             segs=[0]*len(segs)
         clss = ex['clss']
         src_txt = ex['src_txt']
         tgt_txt = ex['tgt_txt']
+
+        src_sent_labels = list(range(len(src_txt)))
 
         end_id = [src[-1]]
         src = src[:-1][:self.args.max_pos - 1] + end_id

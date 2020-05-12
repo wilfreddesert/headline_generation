@@ -55,6 +55,7 @@ def preprocess(config_path, file_path, save_path, bert_path, max_src_tokens, max
     bert = BertData(bert_path, lower, max_src_tokens, max_tgt_tokens)
     params = Params.from_file(config_path)
     reader_params = params.pop("reader", default=Params({}))
+    print(reader_params.as_dict())
     reader = DatasetReader.from_params(reader_params)
     data = []
     for i, (text, summary) in enumerate(reader.parse_set(file_path)):
@@ -69,6 +70,8 @@ def preprocess(config_path, file_path, save_path, bert_path, max_src_tokens, max
             'src_txt': src_txt, "tgt_txt": tgt_txt
         }
         data.append(b_data_dict)
+        if i % 10000 == 0:
+            print(f'{i} texts are preprocessed...')
     torch.save(data, save_path)
 
 
