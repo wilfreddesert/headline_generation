@@ -8,6 +8,10 @@ import distributed
 from models.reporter import ReportMgr, Statistics
 from others.logging import logger
 from others.utils import test_rouge, rouge_results_to_str
+from models import data_loader
+from models.data_loader import load_dataset
+from pytorch_transformers import BertTokenizer
+from models.loss import abs_loss
 
 
 def _tally_parameters(model):
@@ -161,6 +165,29 @@ class Trainer(object):
                             step, train_steps,
                             self.optims[0].learning_rate,
                             report_stats)
+
+                        if step % self.args.report_every == 0:
+                            self.model.eval()
+                            logger.info('Model in set eval state')
+
+                            valid_iter = data_loader.Dataloader(self.args, load_dataset(self.args, 'test', shuffle=False),
+                                                                self.args.batch_size, "cuda",
+                                                                shuffle=False, is_test=True)
+
+                            tokenizer = BertTokenizer.from_pretrained(
+                                '/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/',
+                                do_lower_case=True)
+                            symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
+                                       'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
+
+                            valid_loss = abs_loss(self.model.generator, symbols, self.model.vocab_size, train=False,
+                                                  device="cuda")
+
+                            trainer = build_trainer(self.args, 0, self.model, None, valid_loss)
+                            stats = trainer.validate(valid_iter, step)
+                            self.report_manager.report_step(self.optims[0].learning_rate,
+                                                            step, train_stats=None, valid_stats=stats)
+                            self.model.train()
 
                         true_batchs = []
                         accum = 0
