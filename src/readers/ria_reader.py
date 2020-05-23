@@ -18,7 +18,7 @@ def parse_ria_json(path):
             title = data["title"]
             text = data["text"]
             clean_text = BeautifulSoup(text, 'html.parser').text.replace('\xa0', ' ').replace('\n', ' ')
-            if not clean_text or not title:
+            if not clean_text or not title or clean_text.count(' ') < 3 or title.count(' ') < 3:
                 continue
             yield clean_text, title
 
