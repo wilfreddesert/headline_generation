@@ -8,6 +8,8 @@ import random
 from nltk.translate.bleu_score import corpus_bleu
 
 ITERATION = sys.argv[1]
+if len(sys.argv) > 2:
+    PREFIX = sys.argv[2]
 
 
 def calc_duplicate_n_grams_rate(documents):
@@ -56,33 +58,33 @@ def print_metrics(refs, hyps, data, metric="all", meteor_jar=None):
     print("Hyp:\t", metrics["hyp_example"])
 
     if "bleu" in metrics:
-        print("BLEU:     \t{:3.1f}".format(metrics["bleu"] * 100.0))
+        print("BLEU:     \t{:3.2f}".format(metrics["bleu"] * 100.0))
     if "rouge-1" in metrics:
-        print("ROUGE-1-F:\t{:3.1f}".format(metrics["rouge-1"]['f'] * 100.0))
-        print("ROUGE-2-F:\t{:3.1f}".format(metrics["rouge-2"]['f'] * 100.0))
-        print("ROUGE-L-F:\t{:3.1f}".format(metrics["rouge-l"]['f'] * 100.0))
+        print("ROUGE-1-F:\t{:3.2f}".format(metrics["rouge-1"]['f'] * 100.0))
+        print("ROUGE-2-F:\t{:3.2f}".format(metrics["rouge-2"]['f'] * 100.0))
+        print("ROUGE-L-F:\t{:3.2f}".format(metrics["rouge-l"]['f'] * 100.0))
     if "meteor" in metrics:
-        print("METEOR:   \t{:3.1f}".format(metrics["meteor"] * 100.0))
+        print("METEOR:   \t{:3.2f}".format(metrics["meteor"] * 100.0))
     if "duplicate_ngrams" in metrics:
-        print("Dup 1-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][1] * 100.0))
-        print("Dup 2-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][2] * 100.0))
-        print("Dup 3-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][3] * 100.0))
+        print("Dup 1-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][1] * 100.0))
+        print("Dup 2-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][2] * 100.0))
+        print("Dup 3-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][3] * 100.0))
 
 
 
-with open('results/.' + ITERATION + '.gold', 'r') as f:
+with open('results/' + PREFIX + '.' + ITERATION + '.gold', 'r') as f:
     gold = f.readlines()
     
 gold = [el.strip().lower() for el in gold]
 
 
-with open('results/.' + ITERATION + '.candidate', 'r') as f:
+with open('results/' + PREFIX + '.'  + ITERATION + '.candidate', 'r') as f:
     cand = f.readlines()
 
 cand = [el.strip().lower() for el in cand]
 
 
-data = pd.read_csv('results/.' + ITERATION + '.raw_src', sep='\n', names=['text'])
+data = pd.read_csv('results/' + PREFIX + '.' + ITERATION + '.raw_src', sep='\n', names=['text'])
 data = [el.replace(' ##', '').replace('[CLS]', '').replace('[SEP]', '') for el in data.text.values]
 
 assert(len(data) == len(gold) and len(gold) == len(cand))
