@@ -1,14 +1,24 @@
 import os
+from os import path
+from functools import reduce
+import re
 import pandas as pd
 from rouge import Rouge
-from collections import Counter
 import nltk
-import sys
+from nltk.tokenize import wordpunct_tokenize
+import numpy as np
 import random
+import sys
+import tqdm
+from collections import Counter
 from nltk.translate.bleu_score import corpus_bleu
 
-ITERATION = sys.argv[1]
-
+gold_path = sys.argv[1]
+cand_path = sys.argv[2]
+if len(sys.argv) > 3:
+    text_path = sys.argv[3]
+else:
+    text_path = None
 
 def calc_duplicate_n_grams_rate(documents):
     all_ngrams_count = Counter()
@@ -61,33 +71,33 @@ def print_metrics(refs, hyps, data, metric="all", meteor_jar=None):
         print("ROUGE-1-F:\t{:3.1f}".format(metrics["rouge-1"]['f'] * 100.0))
         print("ROUGE-2-F:\t{:3.1f}".format(metrics["rouge-2"]['f'] * 100.0))
         print("ROUGE-L-F:\t{:3.1f}".format(metrics["rouge-l"]['f'] * 100.0))
+        print('ROUGE-mean\t{:3.1f}'.format((metrics["rouge-1"]['f'] + \
+                                            metrics["rouge-2"]['f'] + \
+                                            metrics["rouge-l"]['f']) * 100.0 / 3))
     if "meteor" in metrics:
-        print("METEOR:   \t{:3.1f}".format(metrics["meteor"] * 100.0))
+        print("METEOR:   \t{:3.2f}".format(metrics["meteor"] * 100.0))
     if "duplicate_ngrams" in metrics:
-        print("Dup 1-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][1] * 100.0))
-        print("Dup 2-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][2] * 100.0))
-        print("Dup 3-grams:\t{:3.1f}".format(metrics["duplicate_ngrams"][3] * 100.0))
+        print("Dup 1-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][1] * 100.0))
+        print("Dup 2-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][2] * 100.0))
+        print("Dup 3-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][3] * 100.0))
 
 
-
-with open('results/.' + ITERATION + '.gold', 'r') as f:
+with open(gold_path, 'r') as f:
     gold = f.readlines()
-    
-gold = [el.strip().lower() for el in gold]
+
+gold  = [' '.join(wordpunct_tokenize(el.strip())) for el in gold]
 
 
-with open('results/.' + ITERATION + '.candidate', 'r') as f:
+with open(cand_path, 'r') as f:
     cand = f.readlines()
 
-cand = [el.strip().lower() for el in cand]
+cand = [' '.join(wordpunct_tokenize(el.strip())) for el in cand]
 
+if text_path is None:
+    text = ['' for el in range(len(gold))]
+else:
+    with open(text_path, 'r') as f:
+        text = f.readlines()
 
-data = pd.read_csv('results/.' + ITERATION + '.raw_src', sep='\n', names=['text'])
-data = [el.replace(' ##', '').replace('[CLS]', '').replace('[SEP]', '') for el in data.text.values]
-
-assert(len(data) == len(gold) and len(gold) == len(cand))
-
-print_metrics(gold, cand, data)
-
-
+print_metrics(gold, cand, text)
 
