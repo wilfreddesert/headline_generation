@@ -192,7 +192,7 @@ def validate(args, device_id, pt, step):
                                         args.batch_size, device,
                                         shuffle=False, is_test=True)
 
-    tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/', 
+    tokenizer = BertTokenizer.from_pretrained(args.model_path, 
             do_lower_case=True)
     symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
@@ -226,7 +226,7 @@ def test_abs(args, device_id, pt, step):
     test_iter = data_loader.Dataloader(args, load_dataset(args, 'test', shuffle=False),
                                        args.test_batch_size, device,
                                        shuffle=False, is_test=True)
-    tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/',
+    tokenizer = BertTokenizer.from_pretrained(args.model_path,
             do_lower_case=True)
     symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
@@ -257,7 +257,7 @@ def test_text_abs(args, device_id, pt, step):
                                        args.test_batch_size, device,
                                        shuffle=False, is_test=True)
     logger.info(dir(test_iter))
-    tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/', do_lower_case=True)
+    tokenizer = BertTokenizer.from_pretrained(args.model_path, do_lower_case=True)
     symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
@@ -333,7 +333,7 @@ def train_abs_single(args, device_id):
 
     logger.info(model)
 
-    tokenizer = BertTokenizer.from_pretrained('/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/', do_lower_case=True)
+    tokenizer = BertTokenizer.from_pretrained(args.model_path, do_lower_case=True)
     symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
 
