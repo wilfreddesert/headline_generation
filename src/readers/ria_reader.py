@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Dict
 
 from bs4 import BeautifulSoup
@@ -13,10 +14,18 @@ from readers.summarization_reader import SummarizationReader
 
 def parse_ria_json(path):
     with open(path, "r", encoding="utf-8") as r:
+        # ria2020 parsing os commented
+        # pat = '{\"text\": \"(.*)\", \"title\": \"(.*)\"}' 
         for line in r:
             data = json.loads(line.strip())
+            # data = re.search(pat, line.strip())
+
+            # title = data.group(2).lower().strip()
+            # clean_text = data.group(1).lower().replace('\xa0', ' ').replace('\n', ' ').strip()
+
             title = data["title"]
             text = data["text"]
+
             clean_text = BeautifulSoup(text, 'html.parser').text.replace('\xa0', ' ').replace('\n', ' ')
             if not clean_text or not title or clean_text.count(' ') < 3 or title.count(' ') < 3:
                 continue

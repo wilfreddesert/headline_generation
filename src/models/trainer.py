@@ -175,7 +175,7 @@ class Trainer(object):
                                                                 shuffle=False, is_test=True)
 
                             tokenizer = BertTokenizer.from_pretrained(
-                                '/data/alolbuhtijarov/model/rubert_cased_L-12_H-768_A-12_pt/',
+                                self.args.model_path,
                                 do_lower_case=True)
                             symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                                        'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
