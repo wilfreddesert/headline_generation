@@ -13,12 +13,19 @@ import tqdm
 from collections import Counter
 from nltk.translate.bleu_score import corpus_bleu
 
+<<<<<<< HEAD:src/eval_results.py
 gold_path = sys.argv[1]
 cand_path = sys.argv[2]
 if len(sys.argv) > 3:
     text_path = sys.argv[3]
 else:
     text_path = None
+=======
+ITERATION = sys.argv[1]
+if len(sys.argv) > 2:
+    PREFIX = sys.argv[2]
+
+>>>>>>> 621de5db6d90470f5c1031c4288611005268b411:eval_results.py
 
 def calc_duplicate_n_grams_rate(documents):
     all_ngrams_count = Counter()
@@ -66,30 +73,57 @@ def print_metrics(refs, hyps, data, metric="all", meteor_jar=None):
     print("Hyp:\t", metrics["hyp_example"])
 
     if "bleu" in metrics:
-        print("BLEU:     \t{:3.1f}".format(metrics["bleu"] * 100.0))
+        print("BLEU:     \t{:3.2f}".format(metrics["bleu"] * 100.0))
     if "rouge-1" in metrics:
+<<<<<<< HEAD:src/eval_results.py
         print("ROUGE-1-F:\t{:3.1f}".format(metrics["rouge-1"]['f'] * 100.0))
         print("ROUGE-2-F:\t{:3.1f}".format(metrics["rouge-2"]['f'] * 100.0))
         print("ROUGE-L-F:\t{:3.1f}".format(metrics["rouge-l"]['f'] * 100.0))
         print('ROUGE-mean\t{:3.1f}'.format((metrics["rouge-1"]['f'] + \
                                             metrics["rouge-2"]['f'] + \
                                             metrics["rouge-l"]['f']) * 100.0 / 3))
+=======
+        print("ROUGE-1-F:\t{:3.2f}".format(metrics["rouge-1"]['f'] * 100.0))
+        print("ROUGE-2-F:\t{:3.2f}".format(metrics["rouge-2"]['f'] * 100.0))
+        print("ROUGE-L-F:\t{:3.2f}".format(metrics["rouge-l"]['f'] * 100.0))
+>>>>>>> 621de5db6d90470f5c1031c4288611005268b411:eval_results.py
     if "meteor" in metrics:
         print("METEOR:   \t{:3.2f}".format(metrics["meteor"] * 100.0))
     if "duplicate_ngrams" in metrics:
         print("Dup 1-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][1] * 100.0))
         print("Dup 2-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][2] * 100.0))
         print("Dup 3-grams:\t{:3.2f}".format(metrics["duplicate_ngrams"][3] * 100.0))
+<<<<<<< HEAD:src/eval_results.py
 
 
 with open(gold_path, 'r') as f:
+=======
+
+
+
+with open('results/' + PREFIX + '.' + ITERATION + '.gold', 'r') as f:
+>>>>>>> 621de5db6d90470f5c1031c4288611005268b411:eval_results.py
     gold = f.readlines()
 
+<<<<<<< HEAD:src/eval_results.py
 gold  = [' '.join(wordpunct_tokenize(el.strip())) for el in gold]
 
 
 with open(cand_path, 'r') as f:
     cand = f.readlines()
+=======
+
+with open('results/' + PREFIX + '.'  + ITERATION + '.candidate', 'r') as f:
+    cand = f.readlines()
+
+cand = [el.strip().lower() for el in cand]
+
+
+data = pd.read_csv('results/' + PREFIX + '.' + ITERATION + '.raw_src', sep='\n', names=['text'])
+data = [el.replace(' ##', '').replace('[CLS]', '').replace('[SEP]', '') for el in data.text.values]
+
+assert(len(data) == len(gold) and len(gold) == len(cand))
+>>>>>>> 621de5db6d90470f5c1031c4288611005268b411:eval_results.py
 
 cand = [' '.join(wordpunct_tokenize(el.strip())) for el in cand]
 
