@@ -2,7 +2,7 @@
 Most of the code is taken from authors of BertSumAbs: https://github.com/nlpyang/PreSumm
 
 
-Scripts for mBART are available here: https://github.com/IlyaGusev/summarus/tree/master/external/bart_scripts
+Scripts for mBART and dataset splits are available here: https://github.com/IlyaGusev/summarus
 
 Below are the scripts for BertSumAbs
 
