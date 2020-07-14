@@ -13,7 +13,7 @@ class BertData:
     def __init__(self, bert_model, lower, max_src_tokens, max_tgt_tokens):
         self.max_src_tokens = max_src_tokens
         self.max_tgt_tokens = max_tgt_tokens
-        self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=lower)
+        self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=lower, do_basic_tokenize=False)
         self.sep_token = '[SEP]'
         self.cls_token = '[CLS]'
         self.pad_token = '[PAD]'
