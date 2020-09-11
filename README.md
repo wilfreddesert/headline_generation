@@ -8,7 +8,7 @@ Below are the scripts for BertSumAbs
 
 ### Trained models
 
-BertSumAbs checkpoint: https://yadi.sk/d/8TNDcukhEFeekQ
+BertSumAbs checkpoint: https://yadi.sk/d/2jcjmdEXp0EX-Q
 
 
 ### Data Preprocessing
