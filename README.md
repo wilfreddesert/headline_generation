@@ -1,6 +1,7 @@
 
-Most of the code is taken from authors of BertSumAbs: https://github.com/nlpyang/PreSumm
+Paper: [Advances of Transformer-Based Models for News Headline Generation](https://arxiv.org/abs/2007.05044)
 
+Most of the code is taken from authors of BertSumAbs: https://github.com/nlpyang/PreSumm
 
 Scripts for mBART and dataset splits are available here: https://github.com/IlyaGusev/summarus
 
