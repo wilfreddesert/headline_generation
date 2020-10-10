@@ -14,7 +14,7 @@ import sys
 checkpoint = torch.load(sys.argv[1], map_location=lambda storage, loc: storage)
 markup_path = "/data/alolbuhtijarov/datasets/ru_threads_target.tsv"
 clustering_data_path = "/data/alolbuhtijarov/datasets/ru_clustering_data.jsonl"
-embed_mode = "FirstCLS"
+embed_mode = sys.argv[2] 
 
 
 class BertData:
@@ -177,11 +177,11 @@ for i, (url, record) in tqdm.tqdm(enumerate(url2record.items()), total=embeds.sh
     embeds[i] = doc2vec(text, model, mode=embed_mode)
 
 
-domain = np.logspace(-5, 0, 70)
-quals = [get_quality(dist) for dist in tqdm.tqdm(domain, total=70)]
+domain = np.logspace(-3, 0, 20)
+quals = [get_quality(dist) for dist in tqdm.tqdm(domain, total=11)]
 
-closer_domain = np.linspace(domain[np.argmax(quals)-5], domain[np.argmax(quals)+5], 70)
-closer_quals = [get_quality(dist) for dist in tqdm.tqdm(closer_domain, total=70)]
+closer_domain = np.linspace(domain[max(0, np.argmax(quals)-2)], domain[min(np.argmax(quals)+3, len(domain) - 1)], 11)
+closer_quals = [get_quality(dist) for dist in tqdm.tqdm(closer_domain, total=11)]
 
 
 best_dist = closer_domain[np.argmax(closer_quals)]

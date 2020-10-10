@@ -239,6 +239,12 @@ class AbsSummarizer(nn.Module):
 
     def forward(self, src, tgt, segs, clss, mask_src, mask_tgt, mask_cls):
         top_vec = self.bert(src, segs, mask_src)
+
+
+        for i in range(1, top_vec.shape[1]):
+            top_vec[0][i] = torch.zeros(top_vec.shape[2])
+
+
         dec_state = self.decoder.init_decoder_state(src, top_vec)
         decoder_outputs, state = self.decoder(tgt[:, :-1], top_vec, dec_state)
         return decoder_outputs, None
