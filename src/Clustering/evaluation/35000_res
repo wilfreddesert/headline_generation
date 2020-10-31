@@ -1,0 +1,10 @@
+Best distance = 0.28757649127119633
+              precision    recall  f1-score   support
+
+           0       0.97      0.90      0.94      1571
+           1       0.88      0.96      0.92      1130
+
+    accuracy                           0.93      2701
+   macro avg       0.93      0.93      0.93      2701
+weighted avg       0.93      0.93      0.93      2701
+
