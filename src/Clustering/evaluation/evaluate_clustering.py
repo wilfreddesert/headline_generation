@@ -5,16 +5,13 @@ from collections import defaultdict
 import csv
 import json
 from razdel import sentenize
-from models.model_builder import AbsSummarizer
 import torch
 import numpy as np
 import pandas as pd
 import sys
 
-checkpoint = torch.load(sys.argv[1], map_location=lambda storage, loc: storage)
 markup_path = "/data/alolbuhtijarov/datasets/ru_threads_target.tsv"
 clustering_data_path = "/data/alolbuhtijarov/datasets/ru_clustering_data.jsonl"
-embed_mode = sys.argv[2] 
 
 
 class BertData:
@@ -106,12 +103,12 @@ def calc_metrics(gold_markup, url2label, url2record, output_dict=False):
         predictions.append(prediction)
     return classification_report(targets, predictions, output_dict=output_dict)
 
-def get_quality(dist_threshold, print_result=False):
+def get_quality(embeds, markup, url2record, dist_threshold, print_result=False):
     clustering_model = AgglomerativeClustering(n_clusters=None,
                                            distance_threshold=dist_threshold,
                                            linkage="single",
                                            affinity="cosine")
-
+    
     clustering_model.fit(embeds)
     labels = clustering_model.labels_
     
@@ -130,62 +127,72 @@ def get_quality(dist_threshold, print_result=False):
     return metrics['macro avg']['f1-score']
 
 
-args = lambda a: b
+def eval_clustering(text_to_vector_func):
+    markup = defaultdict(dict)
+    for record in read_markup(markup_path):
+        first_url = record["INPUT:first_url"]
+        second_url = record["INPUT:second_url"]
+        quality = int(record["OUTPUT:quality"] == "OK")
+        markup[(first_url, second_url)] = quality
 
-args.model_path = '/data/alolbuhtijarov/rubert_cased_L-12_H-768_A-12_pt'
-args.large = False
-args.temp_dir = 'temp'
-args.finetune_bert = False
-args.encoder = 'bert'
-args.max_pos = 256
-args.dec_layers = 6
-args.share_emb = False
-args.dec_hidden_size = 768
-args.dec_heads = 8
-args.dec_ff_size = 2048
-args.dec_dropout = 0.2
-args.use_bert_emb = False
-
-bert_data = BertData(args.model_path, True, 510, 128)
+    url2record = dict()
+    filename2url = dict()
+    with open(clustering_data_path, "r") as r:
+        for line in r:
+            record = json.loads(line)
+            url2record[record["url"]] = record
+            filename2url[record["file_name"]] = record["url"]
 
 
-model = AbsSummarizer(args, 'cpu', checkpoint)
-model.eval()
+    embeds = []
 
-markup = defaultdict(dict)
-for record in read_markup(markup_path):
-    first_url = record["INPUT:first_url"]
-    second_url = record["INPUT:second_url"]
-    quality = int(record["OUTPUT:quality"] == "OK")
-    markup[(first_url, second_url)] = quality
+    for i, (url, record) in tqdm.tqdm(enumerate(url2record.items())):
+        text = record["title"] + ' ' + record["text"]
+        text = text.lower().replace('\xa0', ' ')
+        embeds.append(text_to_vector_func(text))
+        
+    embeds = np.array(embeds)
+    assert len(embeds) == len(url2record.items())
 
+    domain = np.logspace(-3, 0, 20)
+    quals = [get_quality(embeds, markup, url2record, dist) for dist in tqdm.tqdm(domain, total=11)]
 
-url2record = dict()
-filename2url = dict()
-with open(clustering_data_path, "r") as r:
-    for line in r:
-        record = json.loads(line)
-        url2record[record["url"]] = record
-        filename2url[record["file_name"]] = record["url"]
+    closer_domain = np.linspace(domain[max(0, np.argmax(quals)-2)], domain[min(np.argmax(quals)+3, len(domain) - 1)], 11)
+    closer_quals = [get_quality(embeds, markup, url2record, dist) for dist in tqdm.tqdm(closer_domain, total=11)]
 
 
-embeds = np.zeros((len(url2record), 768))
+    best_dist = closer_domain[np.argmax(closer_quals)]
 
-for i, (url, record) in tqdm.tqdm(enumerate(url2record.items()), total=embeds.shape[0]):
-    text = record["title"] + ' ' + record["text"]
-    text = text.lower().replace('\xa0', ' ')
-    embeds[i] = doc2vec(text, model, mode=embed_mode)
+    print('Best distance =', best_dist)
+    get_quality(embeds, markup, url2record, best_dist, print_result=True)
 
 
-domain = np.logspace(-3, 0, 20)
-quals = [get_quality(dist) for dist in tqdm.tqdm(domain, total=11)]
+if __name__ == "__main__":
+    from models.model_builder import AbsSummarizer
+    checkpoint = torch.load(sys.argv[1], map_location=lambda storage, loc: storage)
+    embed_mode = sys.argv[2] 
+    
+    args = lambda a: b
 
-closer_domain = np.linspace(domain[max(0, np.argmax(quals)-2)], domain[min(np.argmax(quals)+3, len(domain) - 1)], 11)
-closer_quals = [get_quality(dist) for dist in tqdm.tqdm(closer_domain, total=11)]
+    args.model_path = '/data/alolbuhtijarov/rubert_cased_L-12_H-768_A-12_pt'
+    args.large = False
+    args.temp_dir = 'temp'
+    args.finetune_bert = False
+    args.encoder = 'bert'
+    args.max_pos = 256
+    args.dec_layers = 6
+    args.share_emb = False
+    args.dec_hidden_size = 768
+    args.dec_heads = 8
+    args.dec_ff_size = 2048
+    args.dec_dropout = 0.2
+    args.use_bert_emb = False
+
+    bert_data = BertData(args.model_path, True, 510, 128)
 
 
-best_dist = closer_domain[np.argmax(closer_quals)]
+    model = AbsSummarizer(args, 'cpu', checkpoint)
+    model.eval()
 
-print('Best distance =', best_dist)
-get_quality(best_dist, print_result=True)
-
+    
+    eval_clustering(lambda text: doc2vec(text, model, mode=embed_mode))
