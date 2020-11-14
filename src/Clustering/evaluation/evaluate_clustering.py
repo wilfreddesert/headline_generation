@@ -84,7 +84,7 @@ def read_markup(file_name):
 
 from sklearn.metrics import classification_report
 
-def calc_metrics(gold_markup, url2label, url2record, output_dict=False):
+def calc_metrics(gold_markup, url2label, url2record, output_dict=False, output_raw=False):
     not_found_count = 0
     for first_url, second_url in list(gold_markup.keys()):
         not_found_in_labels = first_url not in url2label or second_url not in url2label
@@ -101,6 +101,9 @@ def calc_metrics(gold_markup, url2label, url2record, output_dict=False):
         second = url2record.get(second_url)
         targets.append(target)
         predictions.append(prediction)
+        
+    if output_raw:
+        return targets, predictions
     return classification_report(targets, predictions, output_dict=output_dict)
 
 def get_quality(embeds, markup, url2record, dist_threshold, print_result=False):
@@ -125,6 +128,26 @@ def get_quality(embeds, markup, url2record, dist_threshold, print_result=False):
         return
     metrics = calc_metrics(markup, url2label, url2record, output_dict=True)
     return metrics['macro avg']['f1-score']
+
+
+def get_clf_report(embeds, markup, url2record, dist_threshold):
+    clustering_model = AgglomerativeClustering(n_clusters=None,
+                                           distance_threshold=dist_threshold,
+                                           linkage="single",
+                                           affinity="cosine")
+    
+    clustering_model.fit(embeds)
+    labels = clustering_model.labels_
+    
+    id2url = dict()
+    for i, (url, _) in enumerate(url2record.items()):
+        id2url[i] = url
+
+    url2label = dict()
+    for i, label in enumerate(labels):
+        url2label[id2url[i]] = label
+        
+    return calc_metrics(markup, url2label, url2record, output_raw=True)
 
 
 def eval_clustering(text_to_vector_func):
@@ -165,6 +188,7 @@ def eval_clustering(text_to_vector_func):
 
     print('Best distance =', best_dist)
     get_quality(embeds, markup, url2record, best_dist, print_result=True)
+    return get_clf_report(embeds, markup, url2record, best_dist)
 
 
 if __name__ == "__main__":
