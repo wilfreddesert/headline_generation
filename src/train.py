@@ -105,6 +105,8 @@ if __name__ == '__main__':
     parser.add_argument("-report_rouge", type=str2bool, nargs='?',const=True,default=True)
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
 
+    parser.add_argument("-ner_masking", default=0, type=int)
+
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
     args.world_size = len(args.gpu_ranks)
@@ -113,6 +115,9 @@ if __name__ == '__main__':
     init_logger(args.log_file)
     device = "cpu" if args.visible_gpus == '-1' else "cuda"
     device_id = 0 if device == "cuda" else -1
+
+    import torch
+    print(torch.__version__)
 
     if (args.task == 'abs'):
         if (args.mode == 'train'):
