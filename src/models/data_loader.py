@@ -189,13 +189,16 @@ class DataIterator(object):
 
 
     def preprocess(self, ex, is_test):
+        if self.args.ner_masking and random.random() < self.args.apply_ner_masking_prob:
+            for ner_type, ner_inds in ex['ner_inds']:
+                if random.random() < self.args.ner_masked_percent:
+                    for ind in ner_inds:
+                        ex['src'][ind] = self.args.ner_mask_token_id
+
         src = ex['src']
         tgt = ex['tgt'][:self.args.max_tgt_len][:-1] + [2]
         #src_sent_labels = ex['src_sent_labels']
         segs = ex['segs']
-
-        if self.args.ner_masking:
-            pass
 
         if not self.args.use_interval:
             segs= [0] * len(segs)

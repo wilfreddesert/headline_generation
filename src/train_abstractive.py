@@ -336,6 +336,7 @@ def train_abs_single(args, device_id):
     tokenizer = BertTokenizer.from_pretrained(args.model_path, do_lower_case=True)
     symbols = {'BOS': tokenizer.vocab['[unused1]'], 'EOS': tokenizer.vocab['[unused2]'],
                'PAD': tokenizer.vocab['[PAD]'], 'EOQ': tokenizer.vocab['[unused3]']}
+    args.ner_mask_token_id = tokenizer.convert_tokens_to_ids(tokenizer.mask_token)
 
     train_loss = abs_loss(model.generator, symbols, model.vocab_size, device, train=True,
                           label_smoothing=args.label_smoothing)

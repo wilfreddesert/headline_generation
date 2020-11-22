@@ -106,6 +106,8 @@ if __name__ == '__main__':
     parser.add_argument("-block_trigram", type=str2bool, nargs='?', const=True, default=True)
 
     parser.add_argument("-ner_masking", default=0, type=int)
+    parser.add_argument("-apply_ner_masking_prob", default=0.95, type=float)
+    parser.add_argument("-ner_masked_percent", default=0.85, type=float)
 
     args = parser.parse_args()
     args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(',')))]
