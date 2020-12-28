@@ -18,21 +18,23 @@ class BertData:
     def __init__(self, bert_model, lower, max_src_tokens, max_tgt_tokens):
         self.max_src_tokens = max_src_tokens
         self.max_tgt_tokens = max_tgt_tokens
-        self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=lower, do_basic_tokenize=False)
-        self.sep_token = '[SEP]'
-        self.cls_token = '[CLS]'
-        self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused1] '
-        self.tgt_eos = ' [unused2]'
-        self.tgt_sent_split = ' [unused3] '
+        self.tokenizer = BertTokenizer.from_pretrained(
+            bert_model, do_lower_case=lower, do_basic_tokenize=False
+        )
+        self.sep_token = "[SEP]"
+        self.cls_token = "[CLS]"
+        self.pad_token = "[PAD]"
+        self.tgt_bos = "[unused1] "
+        self.tgt_eos = " [unused2]"
+        self.tgt_sent_split = " [unused3] "
         self.sep_vid = self.tokenizer.vocab[self.sep_token]
         self.cls_vid = self.tokenizer.vocab[self.cls_token]
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
 
     def preprocess(self, src, tgt):
-        src_txt = [' '.join(s) for s in src]
-        text = ' {} {} '.format(self.sep_token, self.cls_token).join(src_txt)
-        src_tokens = self.tokenizer.tokenize(text)[:self.max_src_tokens]
+        src_txt = [" ".join(s) for s in src]
+        text = " {} {} ".format(self.sep_token, self.cls_token).join(src_txt)
+        src_tokens = self.tokenizer.tokenize(text)[: self.max_src_tokens]
         src_tokens.insert(0, self.cls_token)
         src_tokens.append(self.sep_token)
         src_indices = self.tokenizer.convert_tokens_to_ids(src_tokens)
@@ -51,30 +53,30 @@ class BertData:
 
 def doc2bert(text):
     src = [s.text.lower().split() for s in sentenize(text)]
-    src_indices, segments_ids = bert_data.preprocess(src, '')
-    return { "src": src_indices, "segs": segments_ids }
+    src_indices, segments_ids = bert_data.preprocess(src, "")
+    return {"src": src_indices, "segs": segments_ids}
 
-def doc2vec(text, model, mode='MeanSum'):
+
+def doc2vec(text, model, mode="MeanSum"):
     doc_bert = doc2bert(text)
-    
-    src = torch.tensor([doc_bert['src']])
-    segs = torch.tensor([doc_bert['segs']])
+
+    src = torch.tensor([doc_bert["src"]])
+    segs = torch.tensor([doc_bert["segs"]])
     mask_src = ~(src == 0)
-    
+
     output = model.bert(src, segs, mask_src)
-    
-    if mode == 'FirstCLS':
+
+    if mode == "FirstCLS":
         return output[0][0]
-    elif mode == 'MeanSum':
+    elif mode == "MeanSum":
         return output[0].mean(0)
     else:
-        raise Exception('Wrong mode')
-
+        raise Exception("Wrong mode")
 
 
 def read_markup(file_name):
     with open(file_name, "r") as r:
-        reader = csv.reader(r, delimiter='\t', quotechar='"')
+        reader = csv.reader(r, delimiter="\t", quotechar='"')
         header = next(reader)
         for row in reader:
             assert len(header) == len(row)
@@ -84,11 +86,16 @@ def read_markup(file_name):
 
 from sklearn.metrics import classification_report
 
-def calc_metrics(gold_markup, url2label, url2record, output_dict=False, output_raw=False):
+
+def calc_metrics(
+    gold_markup, url2label, url2record, output_dict=False, output_raw=False
+):
     not_found_count = 0
     for first_url, second_url in list(gold_markup.keys()):
         not_found_in_labels = first_url not in url2label or second_url not in url2label
-        not_found_in_records = first_url not in url2record or second_url not in url2record
+        not_found_in_records = (
+            first_url not in url2record or second_url not in url2record
+        )
         if not_found_in_labels or not_found_in_records:
             not_found_count += 1
             gold_markuo.pop((first_url, second_url))
@@ -101,20 +108,23 @@ def calc_metrics(gold_markup, url2label, url2record, output_dict=False, output_r
         second = url2record.get(second_url)
         targets.append(target)
         predictions.append(prediction)
-        
+
     if output_raw:
         return targets, predictions
     return classification_report(targets, predictions, output_dict=output_dict)
 
+
 def get_quality(embeds, markup, url2record, dist_threshold, print_result=False):
-    clustering_model = AgglomerativeClustering(n_clusters=None,
-                                           distance_threshold=dist_threshold,
-                                           linkage="single",
-                                           affinity="cosine")
-    
+    clustering_model = AgglomerativeClustering(
+        n_clusters=None,
+        distance_threshold=dist_threshold,
+        linkage="single",
+        affinity="cosine",
+    )
+
     clustering_model.fit(embeds)
     labels = clustering_model.labels_
-    
+
     id2url = dict()
     for i, (url, _) in enumerate(url2record.items()):
         id2url[i] = url
@@ -122,23 +132,25 @@ def get_quality(embeds, markup, url2record, dist_threshold, print_result=False):
     url2label = dict()
     for i, label in enumerate(labels):
         url2label[id2url[i]] = label
-        
+
     if print_result:
         print(calc_metrics(markup, url2label, url2record))
         return
     metrics = calc_metrics(markup, url2label, url2record, output_dict=True)
-    return metrics['macro avg']['f1-score']
+    return metrics["macro avg"]["f1-score"]
 
 
 def get_clf_report(embeds, markup, url2record, dist_threshold):
-    clustering_model = AgglomerativeClustering(n_clusters=None,
-                                           distance_threshold=dist_threshold,
-                                           linkage="single",
-                                           affinity="cosine")
-    
+    clustering_model = AgglomerativeClustering(
+        n_clusters=None,
+        distance_threshold=dist_threshold,
+        linkage="single",
+        affinity="cosine",
+    )
+
     clustering_model.fit(embeds)
     labels = clustering_model.labels_
-    
+
     id2url = dict()
     for i, (url, _) in enumerate(url2record.items()):
         id2url[i] = url
@@ -146,7 +158,7 @@ def get_clf_report(embeds, markup, url2record, dist_threshold):
     url2label = dict()
     for i, label in enumerate(labels):
         url2label[id2url[i]] = label
-        
+
     return calc_metrics(markup, url2label, url2record, output_raw=True)
 
 
@@ -166,43 +178,52 @@ def eval_clustering(text_to_vector_func):
             url2record[record["url"]] = record
             filename2url[record["file_name"]] = record["url"]
 
-
     embeds = []
 
     for i, (url, record) in tqdm.tqdm(enumerate(url2record.items())):
-        text = record["title"] + ' ' + record["text"]
-        text = text.lower().replace('\xa0', ' ')
+        text = record["title"] + " " + record["text"]
+        text = text.lower().replace("\xa0", " ")
         embeds.append(text_to_vector_func(text))
-        
+
     embeds = np.array(embeds)
     assert len(embeds) == len(url2record.items())
 
     domain = np.logspace(-3, 0, 20)
-    quals = [get_quality(embeds, markup, url2record, dist) for dist in tqdm.tqdm(domain, total=11)]
+    quals = [
+        get_quality(embeds, markup, url2record, dist)
+        for dist in tqdm.tqdm(domain, total=11)
+    ]
 
-    closer_domain = np.linspace(domain[max(0, np.argmax(quals)-2)], domain[min(np.argmax(quals)+3, len(domain) - 1)], 11)
-    closer_quals = [get_quality(embeds, markup, url2record, dist) for dist in tqdm.tqdm(closer_domain, total=11)]
-
+    closer_domain = np.linspace(
+        domain[max(0, np.argmax(quals) - 2)],
+        domain[min(np.argmax(quals) + 3, len(domain) - 1)],
+        11,
+    )
+    closer_quals = [
+        get_quality(embeds, markup, url2record, dist)
+        for dist in tqdm.tqdm(closer_domain, total=11)
+    ]
 
     best_dist = closer_domain[np.argmax(closer_quals)]
 
-    print('Best distance =', best_dist)
+    print("Best distance =", best_dist)
     get_quality(embeds, markup, url2record, best_dist, print_result=True)
     return get_clf_report(embeds, markup, url2record, best_dist)
 
 
 if __name__ == "__main__":
     from models.model_builder import AbsSummarizer
+
     checkpoint = torch.load(sys.argv[1], map_location=lambda storage, loc: storage)
-    embed_mode = sys.argv[2] 
-    
+    embed_mode = sys.argv[2]
+
     args = lambda a: b
 
-    args.model_path = '/data/alolbuhtijarov/rubert_cased_L-12_H-768_A-12_pt'
+    args.model_path = "/data/alolbuhtijarov/rubert_cased_L-12_H-768_A-12_pt"
     args.large = False
-    args.temp_dir = 'temp'
+    args.temp_dir = "temp"
     args.finetune_bert = False
-    args.encoder = 'bert'
+    args.encoder = "bert"
     args.max_pos = 256
     args.dec_layers = 6
     args.share_emb = False
@@ -214,9 +235,7 @@ if __name__ == "__main__":
 
     bert_data = BertData(args.model_path, True, 510, 128)
 
-
-    model = AbsSummarizer(args, 'cpu', checkpoint)
+    model = AbsSummarizer(args, "cpu", checkpoint)
     model.eval()
 
-    
     eval_clustering(lambda text: doc2vec(text, model, mode=embed_mode))

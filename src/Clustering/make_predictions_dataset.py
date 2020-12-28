@@ -10,31 +10,34 @@ import pickle
 import os
 
 
-DEVICE = 'cuda'
-CHECKPOINT_PATH = r'C:\Users\leshanbog\Documents\model\model_step_15000.pt'
-MODEL_PATH = r'C:\Users\leshanbog\Documents\model\bert\rubert_cased_L-12_H-768_A-12_pt'
-DATASET_PATH = r'C:\Users\leshanbog\Documents\dataset\ru_tg_1101_0510.jsonl'
+DEVICE = "cuda"
+CHECKPOINT_PATH = r"C:\Users\leshanbog\Documents\model\model_step_15000.pt"
+MODEL_PATH = r"C:\Users\leshanbog\Documents\model\bert\rubert_cased_L-12_H-768_A-12_pt"
+DATASET_PATH = r"C:\Users\leshanbog\Documents\dataset\ru_tg_1101_0510.jsonl"
 CHUNK_SIZE = 1024
+
 
 class BertData:
     def __init__(self, bert_model, lower, max_src_tokens, max_tgt_tokens):
         self.max_src_tokens = max_src_tokens
         self.max_tgt_tokens = max_tgt_tokens
-        self.tokenizer = BertTokenizer.from_pretrained(bert_model, do_lower_case=lower, do_basic_tokenize=False)
-        self.sep_token = '[SEP]'
-        self.cls_token = '[CLS]'
-        self.pad_token = '[PAD]'
-        self.tgt_bos = '[unused1] '
-        self.tgt_eos = ' [unused2]'
-        self.tgt_sent_split = ' [unused3] '
+        self.tokenizer = BertTokenizer.from_pretrained(
+            bert_model, do_lower_case=lower, do_basic_tokenize=False
+        )
+        self.sep_token = "[SEP]"
+        self.cls_token = "[CLS]"
+        self.pad_token = "[PAD]"
+        self.tgt_bos = "[unused1] "
+        self.tgt_eos = " [unused2]"
+        self.tgt_sent_split = " [unused3] "
         self.sep_vid = self.tokenizer.vocab[self.sep_token]
         self.cls_vid = self.tokenizer.vocab[self.cls_token]
         self.pad_vid = self.tokenizer.vocab[self.pad_token]
 
     def preprocess(self, src, tgt):
-        src_txt = [' '.join(s) for s in src]
-        text = ' {} {} '.format(self.sep_token, self.cls_token).join(src_txt)
-        src_tokens = self.tokenizer.tokenize(text)[:self.max_src_tokens]
+        src_txt = [" ".join(s) for s in src]
+        text = " {} {} ".format(self.sep_token, self.cls_token).join(src_txt)
+        src_tokens = self.tokenizer.tokenize(text)[: self.max_src_tokens]
         src_tokens.insert(0, self.cls_token)
         src_tokens.append(self.sep_token)
         src_indices = self.tokenizer.convert_tokens_to_ids(src_tokens)
@@ -49,41 +52,41 @@ class BertData:
                 segments_ids += s * [1]
 
         return src_indices, segments_ids
-    
-    
+
+
 def doc2bert(text):
     src = [s.text.lower().split() for s in sentenize(text)]
-    src_indices, segments_ids = bert_data.preprocess(src, '')
-    return { "src": src_indices, "segs": segments_ids }
+    src_indices, segments_ids = bert_data.preprocess(src, "")
+    return {"src": src_indices, "segs": segments_ids}
 
-def doc2vec(text, model, mode='MeanSum'):
+
+def doc2vec(text, model, mode="MeanSum"):
     doc_bert = doc2bert(text)
-    
-    src = torch.tensor([doc_bert['src']])
-    segs = torch.tensor([doc_bert['segs']])
+
+    src = torch.tensor([doc_bert["src"]])
+    segs = torch.tensor([doc_bert["segs"]])
     mask_src = ~(src == 0)
-    
+
     output = model.bert(src.to(DEVICE), segs.to(DEVICE), mask_src.to(DEVICE))
-    
-    if mode == 'FirstCLS':
+
+    if mode == "FirstCLS":
         return output[0][0]
-    elif mode == 'MeanSum':
+    elif mode == "MeanSum":
         return output[0].mean(0)
     else:
-        raise Exception('Wrong mode')
-        
-        
-checkpoint = torch.load(CHECKPOINT_PATH,
-                        map_location=lambda storage, loc: storage)
+        raise Exception("Wrong mode")
+
+
+checkpoint = torch.load(CHECKPOINT_PATH, map_location=lambda storage, loc: storage)
 
 
 args = lambda a: b
 
 args.model_path = MODEL_PATH
 args.large = False
-args.temp_dir = 'temp'
+args.temp_dir = "temp"
 args.finetune_bert = False
-args.encoder = 'bert'
+args.encoder = "bert"
 args.max_pos = 256
 args.dec_layers = 6
 args.share_emb = False
@@ -99,16 +102,24 @@ BertSumAbs = AbsSummarizer(args, DEVICE, checkpoint)
 BertSumAbs.eval()
 
 
-data = pd.read_json(DATASET_PATH, encoding='utf-8', lines=True, chunksize=CHUNK_SIZE)
+data = pd.read_json(DATASET_PATH, encoding="utf-8", lines=True, chunksize=CHUNK_SIZE)
 
 
 for el in tqdm.tqdm(data, total=450000 // CHUNK_SIZE):
-    with open('vectors.npy', 'ab') as fvecs, open('text.jsonl', 'a', encoding='utf-8') as ft:
+    with open("vectors.npy", "ab") as fvecs, open(
+        "text.jsonl", "a", encoding="utf-8"
+    ) as ft:
         for j in range(CHINK_SIZE):
-            text = el.iloc[j]["text"].lower().replace('\xa0', ' ').replace('\n', ' ').strip()
+            text = (
+                el.iloc[j]["text"]
+                .lower()
+                .replace("\xa0", " ")
+                .replace("\n", " ")
+                .strip()
+            )
             title = el.iloc[j]["title"].lower()
 
-            if not text or not title or text.count(' ') < 8 or title.count(' ') < 3:
+            if not text or not title or text.count(" ") < 8 or title.count(" ") < 3:
                 continue
 
             ft.write(json.dumps({"text": text, "title": title}) + "\n")

@@ -15,15 +15,17 @@ from others.logging import logger
 def build_report_manager(opt):
     if opt.tensorboard:
         from tensorboardX import SummaryWriter
-        writer = SummaryWriter(opt.tensorboard_log_dir
-                               + datetime.now().strftime("/%b-%d_%H-%M-%S"),
-                               comment="Unmt")
+
+        writer = SummaryWriter(
+            opt.tensorboard_log_dir + datetime.now().strftime("/%b-%d_%H-%M-%S"),
+            comment="Unmt",
+        )
     else:
         writer = None
 
-    report_mgr = ReportMgr(opt.report_every, start_time=-1,
-                           tensorboard_writer=writer)
+    report_mgr = ReportMgr(opt.report_every, start_time=-1, tensorboard_writer=writer)
     return report_mgr
+
 
 class ReportMgrBase(object):
     """
@@ -33,7 +35,7 @@ class ReportMgrBase(object):
         * `_report_step`
     """
 
-    def __init__(self, report_every, start_time=-1.):
+    def __init__(self, report_every, start_time=-1.0):
         """
         Args:
             report_every(int): Report status every this many sentences
@@ -50,8 +52,9 @@ class ReportMgrBase(object):
     def log(self, *args, **kwargs):
         logger.info(*args, **kwargs)
 
-    def report_training(self, step, num_steps, learning_rate,
-                        report_stats, multigpu=False):
+    def report_training(
+        self, step, num_steps, learning_rate, report_stats, multigpu=False
+    ):
         """
         This is the user-defined batch-level traing progress
         report function.
@@ -65,15 +68,16 @@ class ReportMgrBase(object):
             report_stats(Statistics): updated Statistics instance.
         """
         if self.start_time < 0:
-            raise ValueError("""ReportMgr needs to be started
-                                (set 'start_time' or use 'start()'""")
+            raise ValueError(
+                """ReportMgr needs to be started
+                                (set 'start_time' or use 'start()'"""
+            )
 
         if multigpu:
             report_stats = Statistics.all_gather_stats(report_stats)
 
         if step % self.report_every == 0:
-            self._report_training(
-                step, num_steps, learning_rate, report_stats)
+            self._report_training(step, num_steps, learning_rate, report_stats)
             self.progress_step += 1
         return Statistics()
 
@@ -90,15 +94,14 @@ class ReportMgrBase(object):
             valid_stats(Statistics): validation stats
             lr(float): current learning rate
         """
-        self._report_step(
-            lr, step, train_stats=train_stats, valid_stats=valid_stats)
+        self._report_step(lr, step, train_stats=train_stats, valid_stats=valid_stats)
 
     def _report_step(self, *args, **kwargs):
         raise NotImplementedError()
 
 
 class ReportMgr(ReportMgrBase):
-    def __init__(self, report_every, start_time=-1., tensorboard_writer=None):
+    def __init__(self, report_every, start_time=-1.0, tensorboard_writer=None):
         """
         A report manager that writes statistics on standard output as well as
         (optionally) TensorBoard
@@ -113,22 +116,16 @@ class ReportMgr(ReportMgrBase):
 
     def maybe_log_tensorboard(self, stats, prefix, learning_rate, step):
         if self.tensorboard_writer is not None:
-            stats.log_tensorboard(
-                prefix, self.tensorboard_writer, learning_rate, step)
+            stats.log_tensorboard(prefix, self.tensorboard_writer, learning_rate, step)
 
-    def _report_training(self, step, num_steps, learning_rate,
-                         report_stats):
+    def _report_training(self, step, num_steps, learning_rate, report_stats):
         """
         See base class method `ReportMgrBase.report_training`.
         """
-        report_stats.output(step, num_steps,
-                            learning_rate, self.start_time)
+        report_stats.output(step, num_steps, learning_rate, self.start_time)
 
         # Log the progress using the number of batches on the x-axis.
-        self.maybe_log_tensorboard(report_stats,
-                                   "progress",
-                                   learning_rate,
-                                   step)
+        self.maybe_log_tensorboard(report_stats, "progress", learning_rate, step)
         report_stats = Statistics()
 
         return report_stats
@@ -138,22 +135,16 @@ class ReportMgr(ReportMgrBase):
         See base class method `ReportMgrBase.report_step`.
         """
         if train_stats is not None:
-            self.log('Train perplexity: %g' % train_stats.ppl())
-            self.log('Train accuracy: %g' % train_stats.accuracy())
+            self.log("Train perplexity: %g" % train_stats.ppl())
+            self.log("Train accuracy: %g" % train_stats.accuracy())
 
-            self.maybe_log_tensorboard(train_stats,
-                                       "train",
-                                       lr,
-                                       step)
+            self.maybe_log_tensorboard(train_stats, "train", lr, step)
 
         if valid_stats is not None:
-            self.log('Validation perplexity: %g' % valid_stats.ppl())
-            self.log('Validation accuracy: %g' % valid_stats.accuracy())
-            self.log('Validation xent: ' +  str(valid_stats.xent()))
-            self.maybe_log_tensorboard(valid_stats,
-                                       "valid",
-                                       lr,
-                                       step)
+            self.log("Validation perplexity: %g" % valid_stats.ppl())
+            self.log("Validation accuracy: %g" % valid_stats.accuracy())
+            self.log("Validation xent: " + str(valid_stats.xent()))
+            self.maybe_log_tensorboard(valid_stats, "valid", lr, step)
 
 
 class Statistics(object):
@@ -264,18 +255,23 @@ class Statistics(object):
         """
         t = self.elapsed_time()
         logger.info(
-            ("Step %2d/%5d; acc: %6.2f; ppl: %5.2f; xent: %4.2f; " +
-             "lr: %7.8f; %3.0f/%3.0f tok/s; %6.0f sec")
-            % (step, num_steps,
-               self.accuracy(),
-               self.ppl(),
-               self.xent(),
-               learning_rate,
-               self.n_src_words / (t + 1e-5),
-               self.n_words / (t + 1e-5),
-               time.time() - start))
+            (
+                "Step %2d/%5d; acc: %6.2f; ppl: %5.2f; xent: %4.2f; "
+                + "lr: %7.8f; %3.0f/%3.0f tok/s; %6.0f sec"
+            )
+            % (
+                step,
+                num_steps,
+                self.accuracy(),
+                self.ppl(),
+                self.xent(),
+                learning_rate,
+                self.n_src_words / (t + 1e-5),
+                self.n_words / (t + 1e-5),
+                time.time() - start,
+            )
+        )
         sys.stdout.flush()
-
 
     def log_tensorboard(self, prefix, writer, learning_rate, step):
         """ display statistics to tensorboard """

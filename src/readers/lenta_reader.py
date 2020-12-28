@@ -10,16 +10,18 @@ from readers.summarization_reader import SummarizationReader
 
 @DatasetReader.register("lenta")
 class LentaReader(SummarizationReader):
-    def __init__(self,
-                 tokenizer: Tokenizer = None,
-                 source_token_indexers: Dict[str, TokenIndexer] = None,
-                 target_token_indexers: Dict[str, TokenIndexer] = None,
-                 source_max_tokens: int = 400,
-                 target_max_tokens: int = 100,
-                 separate_namespaces: bool = False,
-                 target_namespace: str = "target_tokens",
-                 save_copy_fields: bool = False,
-                 save_pgn_fields: bool = False) -> None:
+    def __init__(
+        self,
+        tokenizer: Tokenizer = None,
+        source_token_indexers: Dict[str, TokenIndexer] = None,
+        target_token_indexers: Dict[str, TokenIndexer] = None,
+        source_max_tokens: int = 400,
+        target_max_tokens: int = 100,
+        separate_namespaces: bool = False,
+        target_namespace: str = "target_tokens",
+        save_copy_fields: bool = False,
+        save_pgn_fields: bool = False,
+    ) -> None:
         super().__init__(
             tokenizer=tokenizer,
             source_token_indexers=source_token_indexers,

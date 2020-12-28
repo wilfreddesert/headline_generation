@@ -1,5 +1,4 @@
 import json
-import re
 from typing import Dict
 
 from bs4 import BeautifulSoup
@@ -12,38 +11,51 @@ from allennlp.data.tokenizers.word_splitter import SimpleWordSplitter
 from readers.summarization_reader import SummarizationReader
 
 
+def process_df(df):
+    result = []
+    for value in df.values:
+        text = value[0]
+        title = value[1]
+        item = dict(text=text, title=title)
+        result.append(item)
+    return result
+
+
 def parse_ria_json(path):
-    with open(path, "r", encoding="utf-8") as r:
-        # ria2020 parsing os commented
-        # pat = '{\"text\": \"(.*)\", \"title\": \"(.*)\"}' 
-        for line in r:
-            data = json.loads(line.strip())
-            # data = re.search(pat, line.strip())
-
-            # title = data.group(2).lower().strip()
-            # clean_text = data.group(1).lower().replace('\xa0', ' ').replace('\n', ' ').strip()
-
-            title = data["title"]
-            text = data["text"]
-
-            clean_text = BeautifulSoup(text, 'html.parser').text.replace('\xa0', ' ').replace('\n', ' ')
-            if not clean_text or not title or clean_text.count(' ') < 3 or title.count(' ') < 3:
-                continue
-            yield clean_text, title
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    for item in data:
+        title = item["title"]
+        text = item["text"]
+        clean_text = (
+            BeautifulSoup(text, "html.parser")
+            .text.replace("\xa0", " ")
+            .replace("\n", " ")
+        )
+        if (
+            not clean_text
+            or not title
+            or clean_text.count(" ") < 3
+            or title.count(" ") < 3
+        ):
+            continue
+        yield clean_text, title
 
 
 @DatasetReader.register("ria")
 class RIAReader(SummarizationReader):
-    def __init__(self,
-                 tokenizer: Tokenizer = None,
-                 source_token_indexers: Dict[str, TokenIndexer] = None,
-                 target_token_indexers: Dict[str, TokenIndexer] = None,
-                 source_max_tokens: int = 400,
-                 target_max_tokens: int = 100,
-                 separate_namespaces: bool = False,
-                 target_namespace: str = "target_tokens",
-                 save_copy_fields: bool = False,
-                 save_pgn_fields: bool = False) -> None:
+    def __init__(
+        self,
+        tokenizer: Tokenizer = None,
+        source_token_indexers: Dict[str, TokenIndexer] = None,
+        target_token_indexers: Dict[str, TokenIndexer] = None,
+        source_max_tokens: int = 400,
+        target_max_tokens: int = 100,
+        separate_namespaces: bool = False,
+        target_namespace: str = "target_tokens",
+        save_copy_fields: bool = False,
+        save_pgn_fields: bool = False,
+    ) -> None:
         if not tokenizer:
             tokenizer = WordTokenizer(word_splitter=SimpleWordSplitter())
         super().__init__(
@@ -55,7 +67,7 @@ class RIAReader(SummarizationReader):
             separate_namespaces=separate_namespaces,
             target_namespace=target_namespace,
             save_copy_fields=save_copy_fields,
-            save_pgn_fields=save_pgn_fields
+            save_pgn_fields=save_pgn_fields,
         )
 
     def parse_set(self, path):

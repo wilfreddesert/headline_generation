@@ -14,11 +14,13 @@ from models.reporter import Statistics
 
 def abs_loss(generator, symbols, vocab_size, device, train=True, label_smoothing=0.0):
     compute = NMTLossCompute(
-        generator, symbols, vocab_size,
-        label_smoothing=label_smoothing if train else 0.0)
+        generator,
+        symbols,
+        vocab_size,
+        label_smoothing=label_smoothing if train else 0.0,
+    )
     compute.to(device)
     return compute
-
 
 
 class LossComputeBase(nn.Module):
@@ -46,9 +48,7 @@ class LossComputeBase(nn.Module):
         self.generator = generator
         self.padding_idx = pad_id
 
-
-
-    def _make_shard_state(self, batch, output,  attns=None):
+    def _make_shard_state(self, batch, output, attns=None):
         """
         Make shard state dictionary for shards() to return iterable
         shards for efficient loss computation. Subclass must define
@@ -94,9 +94,7 @@ class LossComputeBase(nn.Module):
 
         return batch_stats
 
-    def sharded_compute_loss(self, batch, output,
-                              shard_size,
-                             normalization):
+    def sharded_compute_loss(self, batch, output, shard_size, normalization):
         """Compute the forward loss and backpropagate.  Computation is done
         with shards and optionally truncation for memory efficiency.
 
@@ -145,10 +143,7 @@ class LossComputeBase(nn.Module):
         """
         pred = scores.max(1)[1]
         non_padding = target.ne(self.padding_idx)
-        num_correct = pred.eq(target) \
-                          .masked_select(non_padding) \
-                          .sum() \
-                          .item()
+        num_correct = pred.eq(target).masked_select(non_padding).sum().item()
         num_non_padding = non_padding.sum().item()
         return Statistics(loss.item(), num_non_padding, num_correct)
 
@@ -165,6 +160,7 @@ class LabelSmoothingLoss(nn.Module):
     KL-divergence between q_{smoothed ground truth prob.}(w)
     and p_{prob. computed by model}(w) is minimized.
     """
+
     def __init__(self, label_smoothing, tgt_vocab_size, ignore_index=-100):
         assert 0.0 < label_smoothing <= 1.0
         self.padding_idx = ignore_index
@@ -173,7 +169,7 @@ class LabelSmoothingLoss(nn.Module):
         smoothing_value = label_smoothing / (tgt_vocab_size - 2)
         one_hot = torch.full((tgt_vocab_size,), smoothing_value)
         one_hot[self.padding_idx] = 0
-        self.register_buffer('one_hot', one_hot.unsqueeze(0))
+        self.register_buffer("one_hot", one_hot.unsqueeze(0))
         self.confidence = 1.0 - label_smoothing
 
     def forward(self, output, target):
@@ -185,7 +181,7 @@ class LabelSmoothingLoss(nn.Module):
         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
         model_prob.masked_fill_((target == self.padding_idx).unsqueeze(1), 0)
 
-        return F.kl_div(output, model_prob, reduction='sum')
+        return F.kl_div(output, model_prob, reduction="sum")
 
 
 class NMTLossCompute(LossComputeBase):
@@ -193,29 +189,26 @@ class NMTLossCompute(LossComputeBase):
     Standard NMT Loss Computation.
     """
 
-    def __init__(self, generator, symbols, vocab_size,
-                 label_smoothing=0.0):
-        super(NMTLossCompute, self).__init__(generator, symbols['PAD'])
+    def __init__(self, generator, symbols, vocab_size, label_smoothing=0.0):
+        super(NMTLossCompute, self).__init__(generator, symbols["PAD"])
         self.sparse = not isinstance(generator[1], nn.LogSoftmax)
         if label_smoothing > 0:
             self.criterion = LabelSmoothingLoss(
                 label_smoothing, vocab_size, ignore_index=self.padding_idx
             )
         else:
-            self.criterion = nn.NLLLoss(
-                ignore_index=self.padding_idx, reduction='sum'
-            )
+            self.criterion = nn.NLLLoss(ignore_index=self.padding_idx, reduction="sum")
 
     def _make_shard_state(self, batch, output):
         return {
             "output": output,
-            "target": batch.tgt[:,1:],
+            "target": batch.tgt[:, 1:],
         }
 
     def _compute_loss(self, batch, output, target):
         bottled_output = self._bottle(output)
         scores = self.generator(bottled_output)
-        gtruth =target.contiguous().view(-1)
+        gtruth = target.contiguous().view(-1)
 
         loss = self.criterion(scores, gtruth)
 
@@ -268,8 +261,12 @@ def shards(state, shard_size, eval_only=False):
         # want a sequence of dictionaries of tensors.
         # First, unzip the dictionary into a sequence of keys and a
         # sequence of tensor-like sequences.
-        keys, values = zip(*((k, [v_chunk for v_chunk in v_split])
-                             for k, (_, v_split) in non_none.items()))
+        keys, values = zip(
+            *(
+                (k, [v_chunk for v_chunk in v_split])
+                for k, (_, v_split) in non_none.items()
+            )
+        )
 
         # Now, yield a dictionary for each shard. The keys are always
         # the same. values is a sequence of length #keys where each
@@ -284,7 +281,11 @@ def shards(state, shard_size, eval_only=False):
         variables = []
         for k, (v, v_split) in non_none.items():
             if isinstance(v, torch.Tensor) and state[k].requires_grad:
-                variables.extend(zip(torch.split(state[k], shard_size),
-                                     [v_chunk.grad for v_chunk in v_split]))
+                variables.extend(
+                    zip(
+                        torch.split(state[k], shard_size),
+                        [v_chunk.grad for v_chunk in v_split],
+                    )
+                )
         inputs, grads = zip(*variables)
         torch.autograd.backward(inputs, grads)
