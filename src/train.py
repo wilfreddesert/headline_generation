@@ -6,9 +6,10 @@ from __future__ import division
 
 import argparse
 import os
+
 from others.logging import init_logger
-from train_abstractive import validate_abs, train_abs, baseline, test_abs, test_text_abs
-from train_extractive import train_ext, validate_ext, test_ext
+from train_abstractive import baseline, test_abs, test_text_abs, train_abs, validate_abs
+from train_extractive import test_ext, train_ext, validate_ext
 
 model_flags = [
     "hidden_size",
@@ -27,13 +28,12 @@ model_flags = [
 ]
 
 
-def str2bool(v):
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+def str2bool(value):
+    if value.lower() in {"yes", "true", "t", "y", "1"}:
         return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
+    if value.lower() in {"no", "false", "f", "n", "0"}:
         return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
+    raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 if __name__ == "__main__":
@@ -150,8 +150,8 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
 
     init_logger(args.log_file)
-    device = "cpu" if args.visible_gpus == "-1" else "cuda"
-    device_id = 0 if device == "cuda" else -1
+    DEVICE = "cpu" if args.visible_gpus == "-1" else "cuda"
+    DEVICE_ID = 0 if DEVICE == "cuda" else -1
 
     import torch
 
@@ -159,9 +159,9 @@ if __name__ == "__main__":
 
     if args.task == "abs":
         if args.mode == "train":
-            train_abs(args, device_id)
+            train_abs(args, DEVICE_ID)
         elif args.mode == "validate":
-            validate_abs(args, device_id)
+            validate_abs(args, DEVICE_ID)
         elif args.mode == "lead":
             baseline(args, cal_lead=True)
         elif args.mode == "oracle":
@@ -169,34 +169,34 @@ if __name__ == "__main__":
         if args.mode == "test":
             cp = args.test_from
             try:
-                step = int(cp.split(".")[-2].split("_")[-1])
+                STEP = int(cp.split(".")[-2].split("_")[-1])
             except:
-                step = 0
-            test_abs(args, device_id, cp, step)
+                STEP = 0
+            test_abs(args, DEVICE_ID, cp, STEP)
         elif args.mode == "test_text":
             cp = args.test_from
             try:
-                step = int(cp.split(".")[-2].split("_")[-1])
+                STEP = int(cp.split(".")[-2].split("_")[-1])
             except:
-                step = 0
-                test_text_abs(args, device_id, cp, step)
+                STEP = 0
+                test_text_abs(args, DEVICE_ID, cp, STEP)
 
     elif args.task == "ext":
         if args.mode == "train":
-            train_ext(args, device_id)
+            train_ext(args, DEVICE_ID)
         elif args.mode == "validate":
-            validate_ext(args, device_id)
+            validate_ext(args, DEVICE_ID)
         if args.mode == "test":
             cp = args.test_from
             try:
-                step = int(cp.split(".")[-2].split("_")[-1])
+                STEP = int(cp.split(".")[-2].split("_")[-1])
             except:
-                step = 0
-            test_ext(args, device_id, cp, step)
+                STEP = 0
+            test_ext(args, DEVICE_ID, cp, STEP)
         elif args.mode == "test_text":
             cp = args.test_from
             try:
-                step = int(cp.split(".")[-2].split("_")[-1])
+                STEP = int(cp.split(".")[-2].split("_")[-1])
             except:
-                step = 0
-                test_text_abs(args, device_id, cp, step)
+                STEP = 0
+                test_text_abs(args, DEVICE_ID, cp, STEP)
