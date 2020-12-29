@@ -1,20 +1,19 @@
-from typing import Iterable, Dict, Tuple, List
+from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
-from allennlp.data.instance import Instance
+from allennlp.common.util import END_SYMBOL, START_SYMBOL
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.tokenizers.tokenizer import Tokenizer
-from allennlp.data.token_indexers.token_indexer import TokenIndexer
-from allennlp.data.tokenizers import WordTokenizer
-from allennlp.data.token_indexers import SingleIdTokenIndexer
-from allennlp.common.util import START_SYMBOL, END_SYMBOL
-from allennlp.data.tokenizers import Token
 from allennlp.data.fields import (
-    TextField,
     ArrayField,
     MetadataField,
     NamespaceSwappingField,
+    TextField,
 )
+from allennlp.data.instance import Instance
+from allennlp.data.token_indexers import SingleIdTokenIndexer
+from allennlp.data.token_indexers.token_indexer import TokenIndexer
+from allennlp.data.tokenizers import Token, WordTokenizer
+from allennlp.data.tokenizers.tokenizer import Tokenizer
 from allennlp.data.tokenizers.word_splitter import SimpleWordSplitter
 
 

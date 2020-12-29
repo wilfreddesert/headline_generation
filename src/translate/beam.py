@@ -3,7 +3,7 @@ import torch
 from translate import penalties
 
 
-class Beam(object):
+class Beam:
     """
     Class for managing the internals of the beam search process.
 

@@ -1,14 +1,12 @@
 import bisect
 import gc
-import glob
 import random
 
 import torch
-
 from others.logging import logger
 
 
-class Batch(object):
+class Batch:
     def _pad(self, data, pad_id, width=-1):
         if width == -1:
             width = max(len(d) for d in data)
@@ -77,25 +75,12 @@ def load_dataset(args, corpus_type, shuffle):
         )
         return dataset
 
-    # Sort the glob output by file name (by increasing indexes).
-    # pts = sorted(glob.glob(args.bert_data_path + '.' + corpus_type + '.[0-9]*.pt'))
-    # if pts:
-    #    if (shuffle):
-    #        random.shuffle(pts)
-
-    #    for pt in pts:
-    #        yield _lazy_dataset_loader(pt, corpus_type)
-    # else:
-    # Only one inputters.*Dataset, simple!
-    # pt = args.bert_data_path + '.' + corpus_type + '.pt'
-    logger.info(f"Will load {args.bert_data_path + corpus_type}.bert.pt")
-    yield _lazy_dataset_loader(
-        args.bert_data_path + corpus_type + ".bert.pt", corpus_type
-    )
+    logger.info(f"Loading {args.bert_data_path + corpus_type}.bert.pt")
+    yield _lazy_dataset_loader(args.data_path + corpus_type + ".bert.pt", corpus_type)
 
 
 def abs_batch_size_fn(new, count):
-    src, tgt = new[0], new[1]
+    _, tgt = new[0], new[1]
     global max_n_sents, max_n_tokens, max_size
     if count == 1:
         max_size = 0
@@ -112,7 +97,7 @@ def abs_batch_size_fn(new, count):
 def ext_batch_size_fn(new, count):
     if len(new) == 4:
         pass
-    src, labels = new[0], new[4]
+    src, _ = new[0], new[4]
     global max_n_sents, max_n_tokens, max_size
     if count == 1:
         max_size = 0
@@ -124,7 +109,7 @@ def ext_batch_size_fn(new, count):
     return src_elements
 
 
-class Dataloader(object):
+class Dataloader:
     def __init__(self, args, datasets, batch_size, device, shuffle, is_test):
         self.args = args
         self.datasets = datasets
@@ -165,7 +150,7 @@ class Dataloader(object):
         )
 
 
-class DataIterator(object):
+class DataIterator:
     def __init__(
         self, args, dataset, batch_size, device=None, is_test=False, shuffle=True
     ):
@@ -293,7 +278,7 @@ class DataIterator(object):
             return
 
 
-class TextDataloader(object):
+class TextDataloader:
     def __init__(self, args, datasets, batch_size, device, shuffle, is_test):
         self.args = args
         self.batch_size = batch_size
@@ -379,6 +364,5 @@ class TextDataloader(object):
                 self.iterations += 1
                 self._iterations_this_epoch += 1
                 batch = Batch(minibatch, self.device, self.is_test)
-
                 yield batch
             return

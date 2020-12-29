@@ -1,12 +1,12 @@
 import json
 from typing import Dict
 
-from bs4 import BeautifulSoup
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.tokenizers.tokenizer import Tokenizer
 from allennlp.data.token_indexers.token_indexer import TokenIndexer
 from allennlp.data.tokenizers import WordTokenizer
+from allennlp.data.tokenizers.tokenizer import Tokenizer
 from allennlp.data.tokenizers.word_splitter import SimpleWordSplitter
+from bs4 import BeautifulSoup
 
 from readers.summarization_reader import SummarizationReader
 

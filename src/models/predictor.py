@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 """ Translator Class and builder """
 from __future__ import print_function
+
 import codecs
-import os
 import math
+import os
 
 import torch
-
+from others.utils import test_rouge, tile
 from tensorboardX import SummaryWriter
-
-from others.utils import rouge_results_to_str, test_rouge, tile
 from translate.beam import GNMTGlobalScorer
 
 
@@ -22,7 +21,7 @@ def build_predictor(args, tokenizer, symbols, model, logger=None):
     return translator
 
 
-class Translator(object):
+class Translator:
     """
     Uses a model to translate a batch of sentences.
 
@@ -80,7 +79,6 @@ class Translator(object):
             }
 
     def _build_target_tokens(self, pred):
-        # vocab = self.fields["tgt"].vocab
         tokens = []
         for tok in pred:
             tok = int(tok)
@@ -99,10 +97,8 @@ class Translator(object):
         )
         batch_size = batch.batch_size
 
-        preds, pred_score, gold_score, tgt_str, src = (
+        preds, tgt_str, src = (
             translation_batch["predictions"],
-            translation_batch["scores"],
-            translation_batch["gold_score"],
             batch.tgt_str,
             batch.src,
         )
@@ -112,40 +108,28 @@ class Translator(object):
             pred_sents = self.vocab.convert_ids_to_tokens([int(n) for n in preds[b][0]])
             pred_sents = " ".join(pred_sents).replace(" ##", "")
             gold_sent = " ".join(tgt_str[b].split())
-            # translation = Translation(fname[b],src[:, b] if src is not None else None,
-            #                           src_raw, pred_sents,
-            #                           attn[b], pred_score[b], gold_sent,
-            #                           gold_score[b])
-            # src = self.spm.DecodeIds([int(t) for t in translation_batch['batch'].src[0][5] if int(t) != len(self.spm)])
             raw_src = [self.vocab.ids_to_tokens[int(t)] for t in src[b]][:500]
             raw_src = " ".join(raw_src)
             translation = (pred_sents, gold_sent, raw_src)
-            # translation = (pred_sents[0], gold_sent)
             translations.append(translation)
 
         return translations
 
-    def translate(self, data_iter, step, attn_debug=False):
+    def translate(self, data_iter, step: int, attn_debug: bool = False):
 
         self.model.eval()
-        self.logger.info("Translatin...")
+        self.logger.info("Translating...")
         gold_path = self.args.result_path + ".%d.gold" % step
         can_path = self.args.result_path + ".%d.candidate" % step
-        self.gold_out_file = codecs.open(gold_path, "w", "utf-8")
-        self.can_out_file = codecs.open(can_path, "w", "utf-8")
-
-        # raw_gold_path = self.args.result_path + '.%d.raw_gold' % step
-        # raw_can_path = self.args.result_path + '.%d.raw_candidate' % step
-        self.gold_out_file = codecs.open(gold_path, "w", "utf-8")
-        self.can_out_file = codecs.open(can_path, "w", "utf-8")
+        self.gold_out_file = codecs.open(gold_path, "w+", "utf-8")
+        self.can_out_file = codecs.open(can_path, "w+", "utf-8")
 
         raw_src_path = self.args.result_path + ".%d.raw_src" % step
-        self.src_out_file = codecs.open(raw_src_path, "w", "utf-8")
+        self.src_out_file = codecs.open(raw_src_path, "w+", "utf-8")
         self.logger.info(f"Predictions file: {can_path}")
-
-        # pred_results, gold_results = [], []
         ct = 0
-        with torch.no_grad():
+        save_path = os.path.join("../results", "output.txt")
+        with torch.no_grad(), open(save_path, "w+") as write_file:
             for batch in data_iter:
                 if self.args.recall_eval:
                     gold_tgt_len = batch.tgt.size(1)
@@ -154,7 +138,6 @@ class Translator(object):
                 batch_data = self.translate_batch(batch)
                 translations = self.from_batch(batch_data)
                 self.logger.info("Batch translation done...")
-
                 for trans in translations:
                     pred, gold, src = trans
                     pred_str = (
@@ -167,6 +150,10 @@ class Translator(object):
                         .replace("[unused3]", "")
                         .strip()
                     )
+                    write_file.write(pred_str + "\n")
+                    write_file.write(gold + "\n")
+                    write_file.write(src + "\n")
+                    write_file.write("\n")
                     gold_str = gold.strip()
                     if self.args.recall_eval:
                         _pred_str = ""
@@ -176,28 +163,13 @@ class Translator(object):
                             can_gap = math.fabs(
                                 len(_pred_str.split()) - len(gold_str.split())
                             )
-                            # if(can_gap>=gap):
                             if len(can_pred_str.split()) >= len(gold_str.split()) + 10:
                                 pred_str = _pred_str
                                 break
                             else:
                                 gap = can_gap
                                 _pred_str = can_pred_str
-
-                        # pred_str = ' '.join(pred_str.split()[:len(gold_str.split())])
-                    # self.raw_can_out_file.write(' '.join(pred).strip() + '\n')
-                    # self.raw_gold_out_file.write(' '.join(gold).strip() + '\n')
-                    self.can_out_file.write(pred_str + "\n")
-                    self.gold_out_file.write(gold_str + "\n")
-                    self.src_out_file.write(src.strip() + "\n")
                     ct += 1
-                self.can_out_file.flush()
-                self.gold_out_file.flush()
-                self.src_out_file.flush()
-
-        self.can_out_file.close()
-        self.gold_out_file.close()
-        self.src_out_file.close()
         self.logger.info("DONE")
 
     def _report_rouge(self, gold_path, can_path):
@@ -225,9 +197,6 @@ class Translator(object):
             )
 
     def _fast_translate_batch(self, batch, max_length, min_length=0):
-        # TODO: faster code path for beam_size == 1.
-
-        # TODO: support these blacklisted features.
         assert not self.dump_beam
 
         beam_size = self.beam_size
@@ -383,7 +352,7 @@ class Translator(object):
         return results
 
 
-class Translation(object):
+class Translation:
     """
     Container for a translated sentence.
 

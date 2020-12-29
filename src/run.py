@@ -8,8 +8,7 @@ import argparse
 import os
 
 from others.logging import init_logger
-from train_abstractive import baseline, test_abs, test_text_abs, train_abs, validate_abs
-from train_extractive import test_ext, train_ext, validate_ext
+from train_abstractive import test_abs, test_text_abs, train_abs
 
 model_flags = [
     "hidden_size",
@@ -38,14 +37,13 @@ def str2bool(value):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-task", default="ext", type=str, choices=["ext", "abs"])
     parser.add_argument(
         "-encoder", default="bert", type=str, choices=["bert", "baseline"]
     )
     parser.add_argument(
         "-mode", default="train", type=str, choices=["train", "validate", "test"]
     )
-    parser.add_argument("-bert_data_path", default="../bert_data_new/cnndm")
+    parser.add_argument("-data_path", default="../bert_data_new/cnndm")
     parser.add_argument("-model_path", default="../models/")
     parser.add_argument("-result_path", default="../results/cnndm")
     parser.add_argument("-temp_dir", default="../temp")
@@ -152,51 +150,21 @@ if __name__ == "__main__":
     init_logger(args.log_file)
     DEVICE = "cpu" if args.visible_gpus == "-1" else "cuda"
     DEVICE_ID = 0 if DEVICE == "cuda" else -1
-
-    import torch
-
-    print(torch.__version__)
-
-    if args.task == "abs":
-        if args.mode == "train":
-            train_abs(args, DEVICE_ID)
-        elif args.mode == "validate":
-            validate_abs(args, DEVICE_ID)
-        elif args.mode == "lead":
-            baseline(args, cal_lead=True)
-        elif args.mode == "oracle":
-            baseline(args, cal_oracle=True)
-        if args.mode == "test":
-            cp = args.test_from
-            try:
-                STEP = int(cp.split(".")[-2].split("_")[-1])
-            except:
-                STEP = 0
-            test_abs(args, DEVICE_ID, cp, STEP)
-        elif args.mode == "test_text":
-            cp = args.test_from
-            try:
-                STEP = int(cp.split(".")[-2].split("_")[-1])
-            except:
-                STEP = 0
-                test_text_abs(args, DEVICE_ID, cp, STEP)
-
-    elif args.task == "ext":
-        if args.mode == "train":
-            train_ext(args, DEVICE_ID)
-        elif args.mode == "validate":
-            validate_ext(args, DEVICE_ID)
-        if args.mode == "test":
-            cp = args.test_from
-            try:
-                STEP = int(cp.split(".")[-2].split("_")[-1])
-            except:
-                STEP = 0
-            test_ext(args, DEVICE_ID, cp, STEP)
-        elif args.mode == "test_text":
-            cp = args.test_from
-            try:
-                STEP = int(cp.split(".")[-2].split("_")[-1])
-            except:
-                STEP = 0
-                test_text_abs(args, DEVICE_ID, cp, STEP)
+    if args.mode == "train":
+        train_abs(args, DEVICE_ID)
+    elif args.mode == "test":
+        cp = args.test_from
+        try:
+            STEP = int(cp.split(".")[-2].split("_")[-1])
+        except:
+            STEP = 0
+        test_abs(args, DEVICE_ID, cp, STEP)
+    elif args.mode == "test_text":
+        cp = args.test_from
+        try:
+            STEP = int(cp.split(".")[-2].split("_")[-1])
+        except:
+            STEP = 0
+            test_text_abs(args, DEVICE_ID, cp, STEP)
+    else:
+        raise ValueError("Unknown argument")

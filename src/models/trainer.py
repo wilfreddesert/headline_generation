@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import torch
 from tensorboardX import SummaryWriter
 
@@ -8,10 +7,6 @@ import distributed
 from models.reporter import ReportMgr, Statistics
 from others.logging import logger
 from others.utils import test_rouge, rouge_results_to_str
-from models import data_loader
-from models.data_loader import load_dataset
-from pytorch_transformers import BertTokenizer
-from models.loss import abs_loss
 
 
 def _tally_parameters(model):

@@ -21,7 +21,7 @@ from models.loss import abs_loss
 from models.model_builder import AbsSummarizer
 from models.predictor import build_predictor
 from models.trainer import build_trainer
-from others.logging import logger, init_logger
+from others.logging import init_logger, logger
 
 model_flags = [
     "hidden_size",
@@ -40,10 +40,10 @@ model_flags = [
 ]
 
 
-def str2bool(v):
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+def str2bool(value):
+    if value.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
+    elif value.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
@@ -253,9 +253,9 @@ def test_abs(args, device_id, pt, step):
 
     checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
     opt = vars(checkpoint["opt"])
-    for k in opt.keys():
-        if k in model_flags:
-            setattr(args, k, opt[k])
+    for key in opt.keys():
+        if key in model_flags:
+            setattr(args, key, opt[key])
     print(args)
 
     logger.info("Going to load model")
@@ -279,44 +279,6 @@ def test_abs(args, device_id, pt, step):
     }
     predictor = build_predictor(args, tokenizer, symbols, model, logger)
     logger.info("Predictot is built. Going to translate")
-    predictor.translate(test_iter, step)
-
-
-def test_text_abs(args, device_id, pt, step):
-    device = "cpu" if args.visible_gpus == "-1" else "cuda"
-    if pt != "":
-        test_from = pt
-    else:
-        test_from = args.test_from
-    logger.info("Loading checkpoint from %s" % test_from)
-
-    checkpoint = torch.load(test_from, map_location=lambda storage, loc: storage)
-    opt = vars(checkpoint["opt"])
-    for k in opt.keys():
-        if k in model_flags:
-            setattr(args, k, opt[k])
-    print(args)
-
-    model = AbsSummarizer(args, device, checkpoint)
-    model.eval()
-
-    test_iter = data_loader.Dataloader(
-        args,
-        load_dataset(args, "test", shuffle=False),
-        args.test_batch_size,
-        device,
-        shuffle=False,
-        is_test=True,
-    )
-    logger.info(dir(test_iter))
-    tokenizer = BertTokenizer.from_pretrained(args.model_path, do_lower_case=True)
-    symbols = {
-        "BOS": tokenizer.vocab["[unused1]"],
-        "EOS": tokenizer.vocab["[unused2]"],
-        "PAD": tokenizer.vocab["[PAD]"],
-        "EOQ": tokenizer.vocab["[unused3]"],
-    }
-    predictor = build_predictor(args, tokenizer, symbols, model, logger)
     predictor.translate(test_iter, step)
 
 

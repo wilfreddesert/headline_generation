@@ -3,9 +3,7 @@ from __future__ import print_function
 from datetime import datetime
 
 import time
-import os
 import math
-import glob
 import sys
 
 from distributed import all_gather_list
