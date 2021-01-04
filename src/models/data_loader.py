@@ -75,8 +75,8 @@ def load_dataset(args, corpus_type, shuffle):
         )
         return dataset
 
-    logger.info(f"Loading {args.data_path + corpus_type}.bert.pt")
-    yield _lazy_dataset_loader(args.data_path + corpus_type + ".bert.pt", corpus_type)
+    logger.info(f"Loading {args.data_path}.bert.pt")
+    yield _lazy_dataset_loader(args.data_path, corpus_type)
 
 
 def abs_batch_size_fn(new, count):
