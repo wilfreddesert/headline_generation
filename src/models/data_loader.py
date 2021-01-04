@@ -165,7 +165,6 @@ class DataIterator:
         self._iterations_this_epoch = 0
         self.batch_size_fn = abs_batch_size_fn
 
-
     def data(self):
         if self.shuffle:
             random.shuffle(self.dataset)
@@ -247,7 +246,6 @@ class DataIterator:
 
             p_batch = sorted(buffer, key=lambda x: len(x[2]))
             p_batch = sorted(p_batch, key=lambda x: len(x[1]))
-
 
             p_batch = self.batch(p_batch, self.batch_size)
 
