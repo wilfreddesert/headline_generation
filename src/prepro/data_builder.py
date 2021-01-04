@@ -1,30 +1,22 @@
 import gc
 import glob
 import hashlib
-import itertools
 import json
 import os
-import random
 import re
 import subprocess
-from collections import Counter
+import xml.etree.ElementTree as ET
 from os.path import join as pjoin
 
 import torch
+from bs4 import BeautifulSoup
 from multiprocess import Pool
-
+from nltk.tokenize import sent_tokenize, word_tokenize
 from others.logging import logger
 from others.tokenization import BertTokenizer
-from pytorch_transformers import XLNetTokenizer
-
 from others.utils import clean
+
 from prepro.utils import _get_word_ngrams
-
-import xml.etree.ElementTree as ET
-from bs4 import BeautifulSoup
-
-from nltk.tokenize import sent_tokenize, word_tokenize
-
 
 nyt_remove_words = ["photo", "graph", "chart", "map", "table", "drawing"]
 

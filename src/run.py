@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-    Main training workflow
-"""
 from __future__ import division
 
 import argparse

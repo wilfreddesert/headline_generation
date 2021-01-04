@@ -1,21 +1,24 @@
 import argparse
-from os import path
-from functools import reduce
 import re
+from functools import reduce
 
 
-def str2bool(v):
-    if v.lower() in ("yes", "true", "t", "y", "1"):
+def str2bool(value):
+    if value.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
+    elif value.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def n_grams(tokens, n):
-    l = len(tokens)
-    return [tuple(tokens[i : i + n]) for i in range(l) if i + n < l]
+    length = len(tokens)
+    return [
+        tuple(tokens[index : index + n])
+        for index in range(length)
+        if index + n < length
+    ]
 
 
 def has_repeat(elements):
@@ -27,7 +30,6 @@ def cal_self_repeat(summary):
     ngram_repeats = {2: 0, 4: 0, 8: 0}
     sents = summary.split("<q>")
     for n in ngram_repeats.keys():
-        # Respect sentence boundary
         grams = reduce(
             lambda x, y: x + y, [n_grams(sent.split(), n) for sent in sents], []
         )
@@ -70,13 +72,10 @@ def cal_repeat(args):
     gold_ngram_novel = {1: [0, 0, 0], 2: [0, 0, 0], 4: [0, 0, 0]}
 
     for c, g, s in lines:
-        # self_repeats = cal_self_repeat(c)
         cal_novel(c, g, s, summary_ngram_novel, gold_ngram_novel)
     print(summary_ngram_novel, gold_ngram_novel)
 
     for n in summary_ngram_novel.keys():
-        # summary_ngram_novel[n] = summary_ngram_novel[n][2]/len(src_lines)
-        # gold_ngram_novel[n] = gold_ngram_novel[n][2]/len(src_lines)
         summary_ngram_novel[n] = summary_ngram_novel[n][0] / summary_ngram_novel[n][1]
         gold_ngram_novel[n] = gold_ngram_novel[n][0] / gold_ngram_novel[n][1]
     print(summary_ngram_novel, gold_ngram_novel)

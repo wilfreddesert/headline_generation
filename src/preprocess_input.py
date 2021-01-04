@@ -5,6 +5,7 @@ from allennlp.common.params import Params
 from allennlp.data.dataset_readers import DatasetReader
 from razdel import sentenize
 from transformers import BertTokenizer
+
 from readers import ria_reader
 
 

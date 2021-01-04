@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-    Main training workflow
-"""
 from __future__ import division
 
 import argparse
@@ -50,17 +47,14 @@ def str2bool(value):
 
 
 def train_abs_multi(args):
-    """ Spawns 1 process per GPU """
     init_logger()
 
     nb_gpu = args.world_size
     mp = torch.multiprocessing.get_context("spawn")
 
-    # Create a thread to listen for errors in the child processes.
     error_queue = mp.SimpleQueue()
     error_handler = ErrorHandler(error_queue)
 
-    # Train with multiprocessing.
     procs = []
     for i in range(nb_gpu):
         device_id = i
@@ -83,7 +77,6 @@ def train_abs_multi(args):
 
 
 def run(args, device_id, error_queue):
-    """ run process """
 
     setattr(args, "gpu_ranks", [int(i) for i in args.gpu_ranks])
 
@@ -107,31 +100,7 @@ def run(args, device_id, error_queue):
 
 
 class ErrorHandler(object):
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
-<<<<<<< HEAD
->>>>>>> parent of bb0cf28 (Revert "Refactored with Black and sorted imports")
-    """A class that listens for exceptions in children processes and propagates
-    the tracebacks to the parent process."""
-=======
->>>>>>> parent of 99ac354 (Refactored with Black and sorted imports)
-<<<<<<< HEAD
-=======
-    """A class that listens for exceptions in children processes and propagates
-    the tracebacks to the parent process."""
->>>>>>> parent of 44dd650 (Refactored with Black and sorted imports)
-
-=======
->>>>>>> parent of b88af4b (Revert "Refactored with Black and sorted imports")
-
-=======
->>>>>>> parent of 2aabbc4 (Revert "Refactored with Black and sorted imports")
->>>>>>> parent of bb0cf28 (Revert "Refactored with Black and sorted imports")
     def __init__(self, error_queue):
-        """ init error handler """
         import signal
         import threading
 
@@ -142,17 +111,14 @@ class ErrorHandler(object):
         signal.signal(signal.SIGUSR1, self.signal_handler)
 
     def add_child(self, pid):
-        """ error handler """
         self.children_pids.append(pid)
 
     def error_listener(self):
-        """ error listener """
         (rank, original_trace) = self.error_queue.get()
         self.error_queue.put((rank, original_trace))
         os.kill(os.getpid(), signal.SIGUSR1)
 
     def signal_handler(self, signalnum, stackframe):
-        """ signal handler """
         for pid in self.children_pids:
             os.kill(pid, signal.SIGINT)  # kill children processes
         (rank, original_trace) = self.error_queue.get()
