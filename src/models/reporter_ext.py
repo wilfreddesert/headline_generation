@@ -190,8 +190,8 @@ class Statistics(object):
         Returns:
             our_stats(list([`Statistics`])): list of updated stats
         """
-        from distributed import all_gather_list
         from torch.distributed import get_rank
+        from distributed import all_gather_list
 
         # Get a list of world_size lists with len(stat_list) Statistics objects
         all_stats = all_gather_list(stat_list, max_size=max_size)

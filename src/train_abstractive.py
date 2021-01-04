@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+    Main training workflow
+"""
 from __future__ import division
 
 import argparse
@@ -38,7 +40,7 @@ model_flags = [
 ]
 
 
-def str2bool(value: str):
+def str2bool(value):
     if value.lower() in ("yes", "true", "t", "y", "1"):
         return True
     elif value.lower() in ("no", "false", "f", "n", "0"):
@@ -48,6 +50,7 @@ def str2bool(value: str):
 
 
 def train_abs_multi(args):
+    """ Spawns 1 process per GPU """
     init_logger()
 
     nb_gpu = args.world_size
@@ -80,6 +83,7 @@ def train_abs_multi(args):
 
 
 def run(args, device_id, error_queue):
+    """ run process """
 
     setattr(args, "gpu_ranks", [int(i) for i in args.gpu_ranks])
 
@@ -103,7 +107,14 @@ def run(args, device_id, error_queue):
 
 
 class ErrorHandler(object):
+<<<<<<< HEAD
+    """A class that listens for exceptions in children processes and propagates
+    the tracebacks to the parent process."""
+=======
+>>>>>>> parent of 99ac354 (Refactored with Black and sorted imports)
+
     def __init__(self, error_queue):
+        """ init error handler """
         import signal
         import threading
 
@@ -114,14 +125,17 @@ class ErrorHandler(object):
         signal.signal(signal.SIGUSR1, self.signal_handler)
 
     def add_child(self, pid):
+        """ error handler """
         self.children_pids.append(pid)
 
     def error_listener(self):
+        """ error listener """
         (rank, original_trace) = self.error_queue.get()
         self.error_queue.put((rank, original_trace))
         os.kill(os.getpid(), signal.SIGUSR1)
 
     def signal_handler(self, signalnum, stackframe):
+        """ signal handler """
         for pid in self.children_pids:
             os.kill(pid, signal.SIGINT)  # kill children processes
         (rank, original_trace) = self.error_queue.get()
@@ -282,6 +296,7 @@ def baseline(args, cal_lead=False, cal_oracle=False):
     )
 
     trainer = build_trainer(args, "-1", None, None, None)
+    #
     if cal_lead:
         trainer.test(test_iter, 0, cal_lead=True)
     elif cal_oracle:

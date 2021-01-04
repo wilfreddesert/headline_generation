@@ -5,7 +5,6 @@ This includes: LossComputeBase and the standard NMTLossCompute, and
                sharded loss compute stuff.
 """
 from __future__ import division
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
