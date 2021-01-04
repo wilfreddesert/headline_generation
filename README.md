@@ -2,16 +2,17 @@
 Paper: [Advances of Transformer-Based Models for News Headline Generation](https://arxiv.org/abs/2007.05044)
 
 
+Download RuBERT from DeepPavlov: http://docs.deeppavlov.ai/en/master/features/models/bert.html and extract the archive to `src`
+
 ### Trained models
 
 BertSumAbs checkpoint: https://yadi.sk/d/2jcjmdEXp0EX-Q
 
+If you want to use the model, download the checkpoint using the link above and put this file in the `rubert_cased_L-12_H-768_A-12_pt` folder.
+
 ### Data Preprocessing
-
-As a pretrained BERT we use RuBERT from DeepPavlov: http://docs.deeppavlov.ai/en/master/features/models/bert.html
-
 ```
-python convert_to_presumm.py --config-path readers/configs/ria_reader_config.json --file-path ./raw_data/ria_test.json --save-path ./processed_data/output.pt --bert-path ./rubert_cased_L-12_H-768_A-12_pt
+python preprocess_input.py --config-path readers/configs/ria_reader_config.json --file-path ./raw_data/ria_test.json --save-path ./processed_data/output.pt --bert-path ./rubert_cased_L-12_H-768_A-12_pt
 ```
 ### Model Training
 
@@ -23,10 +24,4 @@ python run.py -mode train -data_path ./processed_data/output.pt -visible_gpus -1
 
 ```
 python run.py -mode test -batch_size 12 -test_from ./rubert_cased_L-12_H-768_A-12_pt/model_step_40000.pt -visible_gpus -1 -test_batch_size 12 -data_path ./processed_data/output.pt -log_file ../logs/val_abs_bert_ria -model_path ./rubert_cased_L-12_H-768_A-12_pt -sep_optim true -use_interval true -max_pos 256 -max_length 90 -alpha 0.95 -min_length 8 -result_path ../check_data
-```
-
-### Evaluating
-
-```
-python3 src/eval_results.py results/ria_40k.40000.gold results/ria_40k.40000.candidate
 ```
