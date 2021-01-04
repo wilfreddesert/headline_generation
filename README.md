@@ -17,11 +17,8 @@ BertSumAbs checkpoint: https://yadi.sk/d/2jcjmdEXp0EX-Q
 As a pretrained BERT we use RuBERT from DeepPavlov: http://docs.deeppavlov.ai/en/master/features/models/bert.html
 
 ```
-python3 convert_to_presumm.py --config-path readers/configs/ria_reader_config.json --file-path ~/dataset/ria/ria.shuffled.train.json --save-path ~/dataset/ria_bert/train.bert.pt --bert-path ~/models/rubert_cased_L-12_H-768_A-12_pt
-
-python3 convert_to_presumm.py --config-path readers/configs/ria_reader_config.json --file-path ~/dataset/ria/ria.shuffled.val.json --save-path ~/dataset/ria_bert/test.bert.pt --bert-path ~/models/rubert_cased_L-12_H-768_A-12_pt
+python convert_to_presumm.py --config-path readers/configs/ria_reader_config.json --file-path ./ria_data/ria_test.json --save-path ./dataset/ria_bert/test.bert.pt --bert-path ./rubert_cased_L-12_H-768_A-12_pt
 ```
-
 ### Model Training
 
 ```
@@ -31,7 +28,7 @@ python3 train.py -task abs -mode train -bert_data_path ~/dataset/ria_bert/ -visi
 ### Predicting
 
 ```
-python3 train.py -task abs -mode validate -batch_size 12 -visible_gpus 0 -test_batch_size 12 -bert_data_path ~/dataset/ria_bert/ -log_file ../logs/val_abs_bert_ria -model_path ~/models/rubert_cased_L-12_H-768_A-12_pt/ -sep_optim true -use_interval true -max_pos 256 -max_length 90 -alpha 0.95 -min_length 8 -result_path ../results/
+python run.py -mode test -batch_size 12 -test_from ./rubert_cased_L-12_H-768_A-12_pt/model_step_40000.pt -visible_gpus -1 -test_batch_size 12 -data_path ./dataset/ria_bert/ -log_file ../logs/val_abs_bert_ria -model_path ./rubert_cased_L-12_H-768_A-12_pt -sep_optim true -use_interval true -max_pos 256 -max_length 90 -alpha 0.95 -min_length 8 -result_path ../check_data
 ```
 
 ### Evaluating
