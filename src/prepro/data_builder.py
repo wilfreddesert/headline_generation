@@ -1,22 +1,30 @@
 import gc
 import glob
 import hashlib
+import itertools
 import json
 import os
+import random
 import re
 import subprocess
-import xml.etree.ElementTree as ET
+from collections import Counter
 from os.path import join as pjoin
 
 import torch
-from bs4 import BeautifulSoup
 from multiprocess import Pool
-from nltk.tokenize import sent_tokenize, word_tokenize
+
 from others.logging import logger
 from others.tokenization import BertTokenizer
-from others.utils import clean
+from pytorch_transformers import XLNetTokenizer
 
+from others.utils import clean
 from prepro.utils import _get_word_ngrams
+
+import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
+
+from nltk.tokenize import sent_tokenize, word_tokenize
+
 
 nyt_remove_words = ["photo", "graph", "chart", "map", "table", "drawing"]
 
@@ -85,6 +93,8 @@ def load_xml(p):
 
     for doc_node in root.iter("block"):
         att = doc_node.get("class")
+        # if(att == 'abstract'):
+        #     abs = [p.text for p in list(f.iter('p'))]
         if att == "full_text":
             paras = [p.text.lower().split() for p in list(doc_node.iter("p"))]
             break
@@ -105,6 +115,7 @@ def tokenize(args):
 
     print("Preparing to tokenize %s to %s..." % (stories_dir, tokenized_stories_dir))
     stories = os.listdir(stories_dir)
+    # make IO list file
     print("Making list of files to tokenize...")
     with open("mapping_for_corenlp.txt", "w") as f:
         for s in stories:
@@ -134,6 +145,7 @@ def tokenize(args):
     print("Stanford CoreNLP Tokenizer has finished.")
     os.remove("mapping_for_corenlp.txt")
 
+    # Check that the tokenized stories directory contains the same number of files as the original directory
     num_orig = len(os.listdir(stories_dir))
     num_orig = len(os.listdir(stories_dir))
     num_tokenized = len(os.listdir(tokenized_stories_dir))
@@ -360,6 +372,7 @@ def _format_to_bert(params):
             use_bert_basic_tokenizer=args.use_bert_basic_tokenizer,
             is_test=is_test,
         )
+        # b_data = bert.preprocess(source, tgt, sent_labels, use_bert_basic_tokenizer=args.use_bert_basic_tokenizer)
 
         if b_data is None:
             continue
@@ -436,6 +449,8 @@ def format_to_lines(args):
             test_files.append(f)
         elif real_name in corpus_mapping["train"]:
             train_files.append(f)
+        # else:
+        #     train_files.append(f)
 
     corpora = {"train": train_files, "valid": valid_files, "test": test_files}
     for corpus_type in ["train", "valid", "test"]:
@@ -450,6 +465,7 @@ def format_to_lines(args):
                     args.save_path, corpus_type, p_ct
                 )
                 with open(pt_file, "w") as save:
+                    # save.write('\n'.join(dataset))
                     save.write(json.dumps(dataset))
                     p_ct += 1
                     dataset = []
@@ -459,6 +475,7 @@ def format_to_lines(args):
         if len(dataset) > 0:
             pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
             with open(pt_file, "w") as save:
+                # save.write('\n'.join(dataset))
                 save.write(json.dumps(dataset))
                 p_ct += 1
                 dataset = []
@@ -485,6 +502,7 @@ def format_xsum_to_lines(args):
         mapped_fnames = corpus_mapping[corpus_type]
         root_src = pjoin(args.raw_path, "restbody")
         root_tgt = pjoin(args.raw_path, "firstsentence")
+        # realnames = [fname.split('.')[0] for fname in os.listdir(root_src)]
         realnames = mapped_fnames
 
         a_lst = [(root_src, root_tgt, n) for n in realnames]

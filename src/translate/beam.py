@@ -4,6 +4,19 @@ from translate import penalties
 
 
 class Beam:
+    """
+    Class for managing the internals of the beam search process.
+
+    Takes care of beams, back pointers, and scores.
+
+    Args:
+       size (int): beam size
+       pad, bos, eos (int): indices of padding, beginning, and ending.
+       n_best (int): nbest size to use
+       cuda (bool): use gpu
+       global_scorer (:obj:`GlobalScorer`)
+    """
+
     def __init__(
         self,
         size,
@@ -22,27 +35,36 @@ class Beam:
         self.size = size
         self.tt = torch.cuda if cuda else torch
 
+        # The score for each translation on the beam.
         self.scores = self.tt.FloatTensor(size).zero_()
         self.all_scores = []
 
+        # The backpointers at each time-step.
         self.prev_ks = []
 
+        # The outputs at each time-step.
         self.next_ys = [self.tt.LongTensor(size).fill_(pad)]
         self.next_ys[0][0] = bos
 
+        # Has EOS topped the beam yet.
         self._eos = eos
         self.eos_top = False
 
+        # The attentions (matrix) for each time.
         self.attn = []
 
+        # Time and k pair for finished.
         self.finished = []
         self.n_best = n_best
 
+        # Information for global scoring.
         self.global_scorer = global_scorer
         self.global_state = {}
 
+        # Minimum prediction length
         self.min_length = min_length
 
+        # Apply Penalty at every step
         self.stepwise_penalty = stepwise_penalty
         self.block_ngram_repeat = block_ngram_repeat
         self.exclusion_tokens = exclusion_tokens
@@ -52,23 +74,38 @@ class Beam:
         return self.next_ys[-1]
 
     def get_current_origin(self):
+        "Get the backpointers for the current timestep."
         return self.prev_ks[-1]
 
     def advance(self, word_probs, attn_out):
+        """
+        Given prob over words for every last beam `wordLk` and attention
+        `attn_out`: Compute and update the beam search.
 
+        Parameters:
+
+        * `word_probs`- probs of advancing from the last step (K x words)
+        * `attn_out`- attention at the last step
+
+        Returns: True if beam search is complete.
+        """
         num_words = word_probs.size(1)
         if self.stepwise_penalty:
             self.global_scorer.update_score(self, attn_out)
+        # force the output to be longer than self.min_length
         cur_len = len(self.next_ys)
         if cur_len < self.min_length:
             for k in range(len(word_probs)):
                 word_probs[k][self._eos] = -1e20
+        # Sum the previous scores.
         if len(self.prev_ks) > 0:
             beam_scores = word_probs + self.scores.unsqueeze(1).expand_as(word_probs)
+            # Don't let EOS have children.
             for i in range(self.next_ys[-1].size(0)):
                 if self.next_ys[-1][i] == self._eos:
                     beam_scores[i] = -1e20
 
+            # Block ngram repeats
             if self.block_ngram_repeat > 0:
                 ngrams = []
                 le = len(self.next_ys)
@@ -78,7 +115,9 @@ class Beam:
                     fail = False
                     gram = []
                     for i in range(le - 1):
+                        # Last n tokens, n = block_ngram_repeat
                         gram = (gram + [hyp[i].item()])[-self.block_ngram_repeat :]
+                        # Skip the blocking if it is in the exclusion list
                         if set(gram) & self.exclusion_tokens:
                             continue
                         if tuple(gram) in ngrams:
@@ -94,6 +133,8 @@ class Beam:
         self.all_scores.append(self.scores)
         self.scores = best_scores
 
+        # best_scores_id is flattened beam x word array, so calculate which
+        # word and beam each score came from
         prev_k = best_scores_id / num_words
         self.prev_ks.append(prev_k)
         self.next_ys.append((best_scores_id - prev_k * num_words))
@@ -106,6 +147,7 @@ class Beam:
                 s = global_scores[i]
                 self.finished.append((s, len(self.next_ys) - 1, i))
 
+        # End condition is when top-of-beam is EOS and no global score.
         if self.next_ys[-1][0] == self._eos:
             self.all_scores.append(self.scores)
             self.eos_top = True
@@ -116,6 +158,7 @@ class Beam:
     def sort_finished(self, minimum=None):
         if minimum is not None:
             i = 0
+            # Add from beam until we have minimum outputs.
             while len(self.finished) < minimum:
                 global_scores = self.global_scorer.score(self, self.scores)
                 s = global_scores[i]
@@ -140,6 +183,15 @@ class Beam:
 
 
 class GNMTGlobalScorer(object):
+    """
+    NMT re-ranking score from
+    "Google's Neural Machine Translation System" :cite:`wu2016google`
+
+    Args:
+       alpha (float): length parameter
+       beta (float):  coverage parameter
+    """
+
     def __init__(self, alpha, length_penalty):
         self.alpha = alpha
         penalty_builder = penalties.PenaltyBuilder(length_penalty)
@@ -148,6 +200,9 @@ class GNMTGlobalScorer(object):
         self.length_penalty = penalty_builder.length_penalty()
 
     def score(self, beam, logprobs):
+        """
+        Rescores a prediction based on penalty functions
+        """
         normalized_probs = self.length_penalty(beam, logprobs, self.alpha)
 
         return normalized_probs

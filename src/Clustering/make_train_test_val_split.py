@@ -1,7 +1,6 @@
-import os
-import random
 import sys
-
+import random
+import os
 import numpy as np
 
 dir_path = sys.argv[1]

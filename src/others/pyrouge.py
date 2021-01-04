@@ -1,12 +1,13 @@
-from __future__ import division, print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division
 
-import codecs
 import os
-import platform
 import re
-from functools import partial
+import codecs
+import platform
+
 from subprocess import check_output
 from tempfile import mkdtemp
+from functools import partial
 
 try:
     from configparser import ConfigParser
@@ -15,6 +16,7 @@ except ImportError:
 
 from pyrouge.utils import log
 from pyrouge.utils.file_utils import verify_dir
+
 
 REMAP = {
     "-lrb-": "(",
@@ -676,7 +678,6 @@ class Rouge155(object):
 
 if __name__ == "__main__":
     import argparse
-
     from utils.argparsers import rouge_path_parser
 
     parser = argparse.ArgumentParser(parents=[rouge_path_parser])
