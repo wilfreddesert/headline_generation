@@ -108,10 +108,15 @@ def run(args, device_id, error_queue):
 
 class ErrorHandler(object):
 <<<<<<< HEAD
+<<<<<<< HEAD
     """A class that listens for exceptions in children processes and propagates
     the tracebacks to the parent process."""
 =======
 >>>>>>> parent of 99ac354 (Refactored with Black and sorted imports)
+=======
+    """A class that listens for exceptions in children processes and propagates
+    the tracebacks to the parent process."""
+>>>>>>> parent of 44dd650 (Refactored with Black and sorted imports)
 
     def __init__(self, error_queue):
         """ init error handler """
