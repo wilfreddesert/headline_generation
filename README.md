@@ -10,9 +10,10 @@ As long as you have `pipenv` installed, you can just run `pipenv install` and se
 
 After that, you can just run `pipenv shell`. 
 
+### RuBERT
 Download RuBERT from DeepPavlov: http://docs.deeppavlov.ai/en/master/features/models/bert.html and extract the archive to `src`
 
-### Trained models
+### Checkpoint
 
 BertSumAbs checkpoint: https://yadi.sk/d/2jcjmdEXp0EX-Q
 
