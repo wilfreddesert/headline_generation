@@ -104,6 +104,7 @@ def run(args, device_id, error_queue):
 
 class ErrorHandler(object):
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
     """A class that listens for exceptions in children processes and propagates
@@ -112,6 +113,8 @@ class ErrorHandler(object):
 >>>>>>> parent of 99ac354 (Refactored with Black and sorted imports)
 >>>>>>> parent of b88af4b (Revert "Refactored with Black and sorted imports")
 
+=======
+>>>>>>> parent of 2aabbc4 (Revert "Refactored with Black and sorted imports")
     def __init__(self, error_queue):
         import signal
         import threading
@@ -291,7 +294,6 @@ def baseline(args, cal_lead=False, cal_oracle=False):
     )
 
     trainer = build_trainer(args, "-1", None, None, None)
-    #
     if cal_lead:
         trainer.test(test_iter, 0, cal_lead=True)
     elif cal_oracle:
