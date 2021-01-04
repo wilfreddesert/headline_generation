@@ -2,6 +2,14 @@
 Paper: [Advances of Transformer-Based Models for News Headline Generation](https://arxiv.org/abs/2007.05044)
 
 
+### Dependencies
+
+Note that there are `Pipfile` and `Pipfile.lock` in `src`. 
+
+As long as you have `pipenv` installed, you can just run `pipenv install` and set the environment up.
+
+After that, you can just run `pipenv shell`. 
+
 Download RuBERT from DeepPavlov: http://docs.deeppavlov.ai/en/master/features/models/bert.html and extract the archive to `src`
 
 ### Trained models
