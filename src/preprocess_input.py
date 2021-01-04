@@ -6,8 +6,6 @@ from allennlp.data.dataset_readers import DatasetReader
 from razdel import sentenize
 from transformers import BertTokenizer
 
-from readers import ria_reader
-
 
 class BertData:
     def __init__(self, bert_model, lower, max_src_tokens, max_tgt_tokens):

@@ -156,15 +156,8 @@ if __name__ == "__main__":
         cp = args.test_from
         try:
             STEP = int(cp.split(".")[-2].split("_")[-1])
-        except:
+        except ValueError:
             STEP = 0
         test_abs(args, DEVICE_ID, cp, STEP)
-    elif args.mode == "test_text":
-        cp = args.test_from
-        try:
-            STEP = int(cp.split(".")[-2].split("_")[-1])
-        except:
-            STEP = 0
-            test_text_abs(args, DEVICE_ID, cp, STEP)
     else:
         raise ValueError("Unknown argument")
