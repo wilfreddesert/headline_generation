@@ -8,7 +8,7 @@ import argparse
 import os
 
 from others.logging import init_logger
-from train_abstractive import test_abs, test_text_abs, train_abs
+from train_abstractive import test_abs, train_abs
 
 model_flags = [
     "hidden_size",

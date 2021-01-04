@@ -6,7 +6,7 @@ from allennlp.data.dataset_readers import DatasetReader
 from razdel import sentenize
 from transformers import BertTokenizer
 
-from readers import *
+from readers import ria_reader
 
 
 class BertData:

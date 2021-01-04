@@ -75,7 +75,7 @@ def load_dataset(args, corpus_type, shuffle):
         )
         return dataset
 
-    logger.info(f"Loading {args.bert_data_path + corpus_type}.bert.pt")
+    logger.info(f"Loading {args.data_path + corpus_type}.bert.pt")
     yield _lazy_dataset_loader(args.data_path + corpus_type + ".bert.pt", corpus_type)
 
 
@@ -163,10 +163,8 @@ class DataIterator:
         self.sort_key = lambda x: len(x[1])
 
         self._iterations_this_epoch = 0
-        if self.args.task == "abs":
-            self.batch_size_fn = abs_batch_size_fn
-        else:
-            self.batch_size_fn = ext_batch_size_fn
+        self.batch_size_fn = abs_batch_size_fn
+
 
     def data(self):
         if self.shuffle:
@@ -247,11 +245,9 @@ class DataIterator:
         data = self.data()
         for buffer in self.batch_buffer(data, self.batch_size * 300):
 
-            if self.args.task == "abs":
-                p_batch = sorted(buffer, key=lambda x: len(x[2]))
-                p_batch = sorted(p_batch, key=lambda x: len(x[1]))
-            else:
-                p_batch = sorted(buffer, key=lambda x: len(x[2]))
+            p_batch = sorted(buffer, key=lambda x: len(x[2]))
+            p_batch = sorted(p_batch, key=lambda x: len(x[1]))
+
 
             p_batch = self.batch(p_batch, self.batch_size)
 
@@ -337,12 +333,8 @@ class TextDataloader:
         """ Create batches """
         data = self.data()
         for buffer in self.batch_buffer(data, self.batch_size * 300):
-            if self.args.task == "abs":
-                p_batch = sorted(buffer, key=lambda x: len(x[2]))
-                p_batch = sorted(p_batch, key=lambda x: len(x[1]))
-            else:
-                p_batch = sorted(buffer, key=lambda x: len(x[2]))
-                p_batch = batch(p_batch, self.batch_size)
+            p_batch = sorted(buffer, key=lambda x: len(x[2]))
+            p_batch = sorted(p_batch, key=lambda x: len(x[1]))
 
             p_batch = batch(p_batch, self.batch_size)
 
