@@ -1,15 +1,11 @@
 import argparse
+import codecs
 import os
-import time
-
-# from multiprocess import Pool as Pool2
-from multiprocessing import Pool
-
 import shutil
 import sys
-import codecs
+import time
+from multiprocessing import Pool
 
-# from onmt.utils.logging import init_logger, logger
 from others import pyrouge
 
 
