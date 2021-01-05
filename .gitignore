@@ -150,3 +150,6 @@ cython_debug/
 
 #VS Code
 .vscode
+
+# Huge train and test files
+lenta_data.json
