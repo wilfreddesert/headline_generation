@@ -19,18 +19,23 @@ BertSumAbs checkpoint: https://yadi.sk/d/2jcjmdEXp0EX-Q
 
 If you want to use the model, download the checkpoint using the link above and put this file in the `rubert_cased_L-12_H-768_A-12_pt` folder.
 
+### Config
+
+You can easily change any parameters and hyperparameters by modifying `config.yaml`
+
 ### Data Preprocessing
+
 ```
-python preprocess_input.py --config-path readers/configs/ria_reader_config.json --file-path ./raw_data/ria_test.json --save-path ./processed_data/output.pt --bert-path ./rubert_cased_L-12_H-768_A-12_pt
+python preprocess_input.py --config_path config.yaml
 ```
 ### Model Training
 
 ```
-python run.py -mode train -data_path ./processed_data/output.pt -visible_gpus -1 -dec_dropout 0.2 -model_path ./rubert_cased_L-12_H-768_A-12_pt -sep_optim true -lr_bert 0.002 -lr_dec 0.2 -save_checkpoint_steps 5000 -batch_size 8 -train_steps 200000 -report_every 400 -accum_count 95 -use_bert_emb true -use_interval true -warmup_steps_bert 20000 -warmup_steps_dec 10000 -max_pos 256 -log_file ../logs/abs_bert_ria
+python run.py --mode train --config_path ./config.yaml  
 ```
 
 ### Predicting
 
 ```
-python run.py -mode test -batch_size 12 -test_from ./rubert_cased_L-12_H-768_A-12_pt/model_step_40000.pt -visible_gpus -1 -test_batch_size 12 -data_path ./processed_data/output.pt -log_file ../logs/val_abs_bert_ria -model_path ./rubert_cased_L-12_H-768_A-12_pt -sep_optim true -use_interval true -max_pos 256 -max_length 90 -alpha 0.95 -min_length 8 -result_path ../check_data
+python run.py --mode test --config_path ./config.yaml  
 ```

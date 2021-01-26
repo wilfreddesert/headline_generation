@@ -4,6 +4,9 @@ from __future__ import division
 import argparse
 import os
 
+import yaml
+from recordtype import recordtype
+
 from others.logging import init_logger
 from train_abstractive import test_abs, train_abs
 
@@ -34,127 +37,36 @@ def str2bool(value):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-encoder", default="bert", type=str, choices=["bert", "baseline"]
-    )
-    parser.add_argument(
-        "-mode", default="train", type=str, choices=["train", "validate", "test"]
-    )
-    parser.add_argument("-data_path", default="../bert_data_new/cnndm")
-    parser.add_argument("-model_path", default="../models/")
-    parser.add_argument("-result_path", default="../results/cnndm")
-    parser.add_argument("-temp_dir", default="../temp")
-
-    parser.add_argument("-batch_size", default=140, type=int)
-    parser.add_argument("-test_batch_size", default=200, type=int)
-
-    parser.add_argument("-max_pos", default=512, type=int)
-    parser.add_argument(
-        "-use_interval", type=str2bool, nargs="?", const=True, default=True
-    )
-    parser.add_argument("-large", type=str2bool, nargs="?", const=True, default=False)
-    parser.add_argument("-load_from_extractive", default="", type=str)
-
-    parser.add_argument(
-        "-sep_optim", type=str2bool, nargs="?", const=True, default=False
-    )
-    parser.add_argument("-lr_bert", default=2e-3, type=float)
-    parser.add_argument("-lr_dec", default=2e-3, type=float)
-    parser.add_argument(
-        "-use_bert_emb", type=str2bool, nargs="?", const=True, default=False
-    )
-
-    parser.add_argument(
-        "-share_emb", type=str2bool, nargs="?", const=True, default=False
-    )
-    parser.add_argument(
-        "-finetune_bert", type=str2bool, nargs="?", const=True, default=True
-    )
-    parser.add_argument("-dec_dropout", default=0.2, type=float)
-    parser.add_argument("-dec_layers", default=6, type=int)
-    parser.add_argument("-dec_hidden_size", default=768, type=int)
-    parser.add_argument("-dec_heads", default=8, type=int)
-    parser.add_argument("-dec_ff_size", default=2048, type=int)
-    parser.add_argument("-enc_hidden_size", default=512, type=int)
-    parser.add_argument("-enc_ff_size", default=512, type=int)
-    parser.add_argument("-enc_dropout", default=0.2, type=float)
-    parser.add_argument("-enc_layers", default=6, type=int)
-
-    # params for EXT
-    parser.add_argument("-ext_dropout", default=0.2, type=float)
-    parser.add_argument("-ext_layers", default=2, type=int)
-    parser.add_argument("-ext_hidden_size", default=768, type=int)
-    parser.add_argument("-ext_heads", default=8, type=int)
-    parser.add_argument("-ext_ff_size", default=2048, type=int)
-
-    parser.add_argument("-label_smoothing", default=0.1, type=float)
-    parser.add_argument("-generator_shard_size", default=32, type=int)
-    parser.add_argument("-alpha", default=0.6, type=float)
-    parser.add_argument("-beam_size", default=6, type=int)
-    parser.add_argument("-min_length", default=15, type=int)
-    parser.add_argument("-max_length", default=150, type=int)
-    parser.add_argument("-max_tgt_len", default=140, type=int)
-
-    parser.add_argument("-param_init", default=0, type=float)
-    parser.add_argument(
-        "-param_init_glorot", type=str2bool, nargs="?", const=True, default=True
-    )
-    parser.add_argument("-optim", default="adam", type=str)
-    parser.add_argument("-lr", default=1, type=float)
-    parser.add_argument("-beta1", default=0.9, type=float)
-    parser.add_argument("-beta2", default=0.999, type=float)
-    parser.add_argument("-warmup_steps", default=8000, type=int)
-    parser.add_argument("-warmup_steps_bert", default=8000, type=int)
-    parser.add_argument("-warmup_steps_dec", default=8000, type=int)
-    parser.add_argument("-max_grad_norm", default=0, type=float)
-
-    parser.add_argument("-save_checkpoint_steps", default=5, type=int)
-    parser.add_argument("-accum_count", default=1, type=int)
-    parser.add_argument("-report_every", default=1, type=int)
-    parser.add_argument("-train_steps", default=1000, type=int)
-    parser.add_argument(
-        "-recall_eval", type=str2bool, nargs="?", const=True, default=False
-    )
-
-    parser.add_argument("-visible_gpus", default="-1", type=str)
-    parser.add_argument("-gpu_ranks", default="0", type=str)
-    parser.add_argument("-log_file", default="../logs/cnndm.log")
-    parser.add_argument("-seed", default=42, type=int)
-
-    parser.add_argument(
-        "-test_all", type=str2bool, nargs="?", const=True, default=False
-    )
-    parser.add_argument("-test_from", default="")
-    parser.add_argument("-test_start_from", default=-1, type=int)
-
-    parser.add_argument("-train_from", default="")
-    parser.add_argument(
-        "-report_rouge", type=str2bool, nargs="?", const=True, default=True
-    )
-    parser.add_argument(
-        "-block_trigram", type=str2bool, nargs="?", const=True, default=True
-    )
-
-    parser.add_argument("-ner_masking", default=0, type=int)
-    parser.add_argument("-apply_ner_masking_prob", default=0.95, type=float)
-    parser.add_argument("-ner_masked_percent", default=0.85, type=float)
+    parser.add_argument("--config_path", required=True)
+    parser.add_argument("--mode", required=True)
 
     args = parser.parse_args()
-    args.gpu_ranks = [int(i) for i in range(len(args.visible_gpus.split(",")))]
-    args.world_size = len(args.gpu_ranks)
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
+    config_path = args.config_path
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    config["train"]["gpu_ranks"] = [
+        int(i) for i in range(len(config["train"]["visible_gpus"].split(",")))
+    ]
+    config["train"]["world_size"] = len(config["train"]["gpu_ranks"])
+    os.environ["CUDA_VISIBLE_DEVICES"] = config["train"]["visible_gpus"]
 
-    init_logger(args.log_file)
-    DEVICE = "cpu" if args.visible_gpus == "-1" else "cuda"
+    init_logger(config["train"]["log_file"])
+    DEVICE = "cpu" if config["train"]["visible_gpus"] == "-1" else "cuda"
     DEVICE_ID = 0 if DEVICE == "cuda" else -1
+    kwargs_train = config["train"]
+    kwargs_test = {**kwargs_train, **config["test"]}
+    TrainArgs = recordtype("TrainArgs", kwargs_train)
+    TestArgs = recordtype("TestArgs", kwargs_test)
+    train_args = TrainArgs(**kwargs_train)
+    test_args = TestArgs(**kwargs_test)
     if args.mode == "train":
-        train_abs(args, DEVICE_ID)
+        train_abs(args=train_args, device_id=DEVICE_ID)
     elif args.mode == "test":
-        cp = args.test_from
+        cp = test_args.test_from
         try:
             STEP = int(cp.split(".")[-2].split("_")[-1])
         except ValueError:
             STEP = 0
-        test_abs(args, DEVICE_ID, cp, STEP)
+        test_abs(args=test_args, device_id=DEVICE_ID, pt=cp, step=STEP)
     else:
         raise ValueError("Unknown argument")

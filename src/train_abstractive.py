@@ -7,7 +7,6 @@ import os
 import random
 import signal
 import time
-
 import torch
 from pytorch_transformers import BertTokenizer
 

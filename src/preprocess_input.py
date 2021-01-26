@@ -1,6 +1,7 @@
 import argparse
 
 import torch
+import yaml
 from allennlp.common.params import Params
 from allennlp.data.dataset_readers import DatasetReader
 from razdel import sentenize
@@ -101,13 +102,11 @@ def preprocess(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config-path", type=str, required=True)
-    parser.add_argument("--file-path", type=str, required=True)
-    parser.add_argument("--save-path", type=str, required=True)
-    parser.add_argument("--bert-path", type=str, required=True)
-    parser.add_argument("--lower", action="store_true")
-    parser.add_argument("--max-src-tokens", type=int, default=600)
-    parser.add_argument("--max-tgt-tokens", type=int, default=200)
-    parser.add_argument("--nrows", type=int, default=None)
+    parser.add_argument("--config_path", type=str, required=True)
     args = parser.parse_args()
-    preprocess(**vars(args))
+    config_path = args.config_path
+    with open(config_path, "r") as f:
+        config_file = yaml.safe_load(f)
+    kwargs = config_file["preprocess"]
+    preprocess(**kwargs)
+
