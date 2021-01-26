@@ -109,4 +109,3 @@ if __name__ == "__main__":
         config_file = yaml.safe_load(f)
     kwargs = config_file["preprocess"]
     preprocess(**kwargs)
-
