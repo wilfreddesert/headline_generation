@@ -28,7 +28,7 @@ You can easily change any parameters and hyperparameters by modifying `config.ya
 Run the following command to convert your data to the required format. Pay attention to the samples in the repo and the config file. 
 
 ```
-python preprocess_input.py --config_path config.yaml
+python preprocess_input.py --config_path ./config.yaml
 ```
 
 Once your data is ready, you can either train your model (again, check the config file to set everything up and then go to step 2) or test your model (go directly to step 3).  
