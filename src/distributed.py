@@ -1,9 +1,3 @@
-""" Pytorch Distributed utils
-    This piece of code was heavily inspired by the equivalent of Fairseq-py
-    https://github.com/pytorch/fairseq
-"""
-
-
 from __future__ import print_function
 
 import math
