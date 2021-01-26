@@ -1,10 +1,10 @@
 """ Report manager utility """
 from __future__ import print_function
-from datetime import datetime
 
-import time
 import math
 import sys
+import time
+from datetime import datetime
 
 from distributed import all_gather_list
 from others.logging import logger
